@@ -38,8 +38,9 @@ const argv = yargs
       demandOption: false,
     },
     'api-uri': {
-      describe: `API base URI like https://my.snyk.domain/api
-                       if not specified, taken from SNYK_API`,
+      describe: `for on-premise/self-hosted, API base URI like https://my.snyk.domain/api
+                       if not specified, taken from SNYK_API.  Snyk SaaS endpoint 
+                       is used if neither are specified`,
       demandOption: false,
     },
     debug: {
@@ -67,7 +68,12 @@ const deleteMissingFlag: boolean = Boolean(
 
 const checkEnvironment = () => {
   //console.log(`DEBUG mode is ${debug}`)
-  utils.log(`Delete Missing membership from Snyk?: ${deleteMissingFlag}`);
+  if (snykApiBaseUri == 'undefined') {
+    utils.log('snykApiBaseUri: not specified, default to SaaS');
+  } else {
+    utils.log(`snykApiBaseUri: ${snykApiBaseUri}`);
+  }
+  utils.log(`Delete Missing enabled?: ${deleteMissingFlag}`);
   debug('SNYK_IAM_API_KEYS: ');
   for (const key of snykKeys.split(',')) {
     debug(` ${key}`);
@@ -77,16 +83,11 @@ const checkEnvironment = () => {
   debug('SNYK_API: ' + snykApiBaseUri);
   debug('--delete-missing flag: ' + deleteMissingFlag);
 
-  if (
-    snykKeys == 'undefined' ||
-    snykMembershipFile == 'undefined' ||
-    snykApiBaseUri == 'undefined'
-  ) {
+  if (snykKeys == 'undefined' || snykMembershipFile == 'undefined') {
     utils.log('environment not set\n');
     utils.log('snykKeys:');
     inputUtils.printKeys(snykKeys);
     utils.log(`snykMembershipFile: ${snykMembershipFile}`);
-    utils.log(`snykApiBaseUri: ${snykApiBaseUri}`);
     utils.log(`deleteMissingFlag: ${deleteMissingFlag}`);
     yargs.showHelp();
     process.exit(1);
