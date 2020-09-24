@@ -19,7 +19,10 @@ export default function(): boolean {
 const argv = yargs
   .usage(
     `\nUsage: $0 [OPTIONS]
-                If no arguments are specified, values will be picked up from environment variables`,
+                If no arguments are specified, values will be picked up from environment variables.\n
+                If pointing to a self-hosted or on-premise instance of Snyk,
+                SNYK_API is required to be set in your environment,
+                e.g. SNYK_API=https://my.snyk.domain/api. If omitted, then Snyk SaaS is used.`,
   )
   .options({
     'delete-missing': {
@@ -35,12 +38,6 @@ const argv = yargs
     'api-keys': {
       describe: `list of api keys per group
                        if not specified, taken from SNYK_IAM_API_KEYS`,
-      demandOption: false,
-    },
-    'api-uri': {
-      describe: `for on-premise/self-hosted, API base URI like https://my.snyk.domain/api
-                       if not specified, taken from SNYK_API.  Snyk SaaS endpoint 
-                       is used if neither are specified`,
       demandOption: false,
     },
     debug: {
@@ -59,9 +56,7 @@ const snykMembershipFile: string = String(
     ? argv['membership-file']
     : process.env.SNYK_IAM_MEMBERSHIP_FILE,
 );
-const snykApiBaseUri: string = String(
-  argv['api-uri'] ? argv['api-uri'] : process.env.SNYK_API,
-);
+const snykApiBaseUri: string = String(process.env.SNYK_API);
 const deleteMissingFlag: boolean = Boolean(
   argv['delete-missing'] ? argv['delete-missing'] : false,
 );
