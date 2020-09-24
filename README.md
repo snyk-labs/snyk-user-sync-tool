@@ -1,6 +1,8 @@
 ![Snyk logo](https://snyk.io/style/asset/logo/snyk-print.svg)
 
 ***
+[![CircleCI](https://circleci.com/gh/snyk-tech-services/snyk-user-sync-tool.svg?style=svg&circle-token=bfb34e49aa301cfa4ef4272541360a475ff95ad4)](https://circleci.com/gh/snyk-tech-services/snyk-user-sync-tool)
+[![Known Vulnerabilities](https://snyk.io/test/github/snyk-tech-services/snyk-user-sync-tool/badge.svg?targetFile=package.json)](https://snyk.io/test/github/snyk-tech-services/snyk-user-sync-tool?targetFile=package.json)
 
 ## snyk-user-sync-tool
 sync user org memberships from an external source into (your on-premise instance) of Snyk
@@ -100,3 +102,18 @@ Sample:
 - In order to populate the group names and keys, you will have to manually create the Groups and a service account in each group.
     - `Note that the name you give the service account is what will appear in the invitation email`
     - `Use the same name across each group being managed by this tool for consistency, for example 'Snyk-User-Sync'`
+
+### Error handling
+gracefully skip certain issues and continue processing
+* Group memberships are skipped when the API Key for the group is invalid. This event is
+also logged.
+* Group memberships are skipped when the group name is not found in the
+SNYK_IAM_API_KEYS list. This event is also logged.
+* Individual memberships are skipped when the role is not a valid option (admin,
+collaborator), or if the userEmail field is not a properly formatted email address. This
+event is also logged.
+* Stale membership removal is skipped for groups when the API Key is invalid. This event
+is also logged.
+
+### Logging
+Each job run has a log user-sync-run-<mm_dd_yy_mm_ss>.log located in the `logs/` directory local to where the application is installed.
