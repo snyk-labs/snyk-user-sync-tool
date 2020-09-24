@@ -1,0 +1,111 @@
+version: 2.1
+orbs:
+    snyk: snyk/snyk@0.0.8
+jobs:
+    build-test-monitor:
+        docker:
+            - image: circleci/node:12
+        steps:
+            - checkout
+            - run: sudo npm install nexe@next -g
+            - run: npm install
+            - run: npx tsc
+            - snyk/scan:
+                fail-on-issues: true
+                monitor-on-build: true
+                token-variable: SNYK_TOKEN
+            - run: npm run test:unit
+            - run: 
+                name: Create release binaries
+                command: |
+                  nexe dist/index.js -t windows-x64-10.16.0 -o ./artifacts/snyk-user-sync-tool-win.exe
+                  nexe dist/index.js -t mac-x64-10.21.0 -o ./artifacts/snyk-user-sync-tool-macos
+                  nexe dist/index.js -t linux-x86-12.16.2 -o ./artifacts/snyk-user-sync-tool-linux-x86
+                  nexe dist/index.js -t linux-x64-12.16.2 -o ./artifacts/snyk-user-sync-tool-linux-x64
+                  sha256sum ./artifacts/snyk-user-sync-tool-win.exe > ./artifacts/snyk-user-sync-tool-win.exe.sha256
+                  sha256sum ./artifacts/snyk-user-sync-tool-macos > ./artifacts/snyk-user-sync-tool-macos.sha256
+                  sha256sum ./artifacts/snyk-user-sync-tool-linux-x86 > ./artifacts/snyk-user-sync-tool-linux-x86.sha256
+                  sha256sum ./artifacts/snyk-user-sync-tool-linux-x64 > ./artifacts/snyk-user-sync-tool-linux-x64.sha256
+                  cat package.json | grep version | cut -f2 -d\: | sed 's/"//g' | sed 's/\,//' > ./VERSION
+            - persist_to_workspace:
+                root: ./artifacts
+                paths:
+                  - ./*
+            - persist_to_workspace:
+                root: ./
+                paths:
+                  - VERSION
+    publish-github-release:
+        docker:
+          - image: circleci/golang:latest
+        steps:
+          - attach_workspace:
+              at: ./artifacts
+          - attach_workspace:
+              at: ./
+          - run:
+              name: "Publish Release on GitHub"
+              command: |
+                go get github.com/tcnksm/ghr
+                VERSION=$(cat ./VERSION)
+                echo "VERSION: ${VERSION}"
+                ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./artifacts/
+    build-test:
+        docker:
+            - image: circleci/node:12
+        steps:
+            - checkout
+            - run: npm install
+            - snyk/scan:
+                fail-on-issues: true
+                monitor-on-build: false
+                token-variable: SNYK_TOKEN
+            - run: npx tsc
+            - run: npm run test:unit
+    build-test-from-fork:
+        docker:
+            - image: circleci/node:12
+        steps:
+            - checkout
+            - run: npm install
+            - run: npx tsc
+            - run: npm run test:unit
+workflows:
+    version: 2
+    nightly:
+        triggers:
+          - schedule:
+              cron: "0 0 * * *"
+              filters:
+                branches:
+                  only:
+                    - master
+        jobs:
+            - build-test-monitor:
+                context: SNYK
+
+    build-test-monitor-release:
+        jobs:
+            - build-test-monitor:
+                context: SNYK
+                filters:
+                    branches:
+                        only:
+                            - master
+            - publish-github-release:
+                requires: 
+                    - build-test-monitor
+    build-test:
+        jobs:
+            - build-test:
+                context: SNYK
+                filters:
+                    branches:
+                        ignore:
+                        - master
+                        - /pull\/[0-9]+/
+            - build-test-from-fork:
+                filters:
+                    branches:
+                        only:
+                        - /pull\/[0-9]+/

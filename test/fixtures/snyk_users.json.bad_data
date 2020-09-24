@@ -1,0 +1,57 @@
+[
+ {
+   "userEmail": "scott.esbrandt@snykio",
+   "role": "admin",
+   "org": "Org B1",
+   "group": "Group B"
+ },
+ {
+   "userEmail": "scott.esbrandt@snykio",
+   "role": "admin",
+   "org": "Starfleet",
+   "group": "Rebel Alliance"
+ },
+ {
+   "userEmail": "scott.esbrandt@snyk.io",
+   "role": "administrator",
+   "org": "Starfighter Corps Gold Squadron",
+   "group": "Rebel Alliance"
+ },
+ {
+  "userEmail": "james.kearney@snyk.io",
+  "role": "member",
+  "org": "Org B1",
+  "group": "Group B"
+},
+{
+  "userEmail": "james.kearney@snyk.io",
+  "role": "admin",
+  "org": "Org B2",
+  "group": "Group B"
+},
+{
+  "userEmail": "@snyk.io",
+  "role": "collaborator",
+  "org": "Org C1",
+  "group": "Group C"
+},
+{
+  "userEmail": "scott.esbrandt@snykio",
+  "role": "admin",
+  "org": "Imperial Stormtroopers",
+  "group": "Galactic Empire"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "admin",
+  "org": "Org E2",
+  "group": "Group E"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "collaborator",
+  "org": "Org F1",
+  "group": "Group F"
+}
+]
+

@@ -1,0 +1,70 @@
+{
+  "name": "snyk-user-sync-tool",
+  "version": "1.0.0",
+  "description": "sync snyk org users from an external source",
+  "main": "dist/index.js",
+  "scripts": {
+    "format:check": "prettier --check '{''{src,test}/!(fixtures)/**/*,*}.{js,ts,json,yml}'",
+    "format": "prettier --write '{''{src,test}/!(fixtures)/**/*,*}.{js,ts,json,yml}'",
+    "lint": "npm run format:check && npm run lint:eslint",
+    "lint:eslint": "eslint --cache '{lib,test}/**/*.ts'",
+    "test": "npm run lint && npm run test:unit",
+    "test:unit": "jest",
+    "test:coverage": "npm run test:unit -- --coverage",
+    "test:watch": "tsc-watch --onSuccess 'npm run test:unit'",
+    "build": "tsc",
+    "build-watch": "tsc -w",
+    "prepare": "npm run build",
+    "snyk-test": "snyk test",
+    "nexe-compile": "nexe dist/index.js"
+  },
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/snyk-tech-services/snyk-user-sync-tool"
+  },
+  "author": "Snyk Tech Services",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=12"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "homepage": "https://github.com/snyk-tech-services/snyk-user-sync-tool#readme",
+  "dependencies": {
+    "debug": "^4.1.1",
+    "snyk-request-manager": "^1.2.1",
+    "tsc": "^1.20150623.0",
+    "yargs": "^15.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.1",
+    "@types/node": "^12.12.26",
+    "@types/yargs": "^15.0.5",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "jest": "^25.5.4",
+    "prettier": "^1.19.1",
+    "ts-jest": "^25.1.0",
+    "ts-node": "8.6.2",
+    "tsc-watch": "^4.1.0",
+    "typescript": "^4.0.3"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ]
+  },
+  "bin": {
+    "snyk-user-sync-tool": "./dist/index.js"
+  },
+  "release": {
+    "branches": [
+      "master"
+    ]
+  }
+}

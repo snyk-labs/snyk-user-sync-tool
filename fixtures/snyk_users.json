@@ -1,0 +1,75 @@
+[
+ {
+   "userEmail": "scott.esbrandt@snyk.io",
+   "role": "collaborator",
+   "org": "Org B1",
+   "group": "Group B"
+ },
+ {
+   "userEmail": "scott.esbrandt@snyk.io",
+   "role": "collaborator",
+   "org": "Org B2",
+   "group": "Group B"
+ },
+ {
+  "userEmail": "james.kearney@snyk.io",
+  "role": "collaborator",
+  "org": "Org B1",
+  "group": "Group B"
+},
+{
+  "userEmail": "james.kearney@snyk.io",
+  "role": "admin",
+  "org": "Org B2",
+  "group": "Group B"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "collaborator",
+  "org": "Org C1",
+  "group": "Group C"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "admin",
+  "org": "Org C3",
+  "group": "Group C"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "admin",
+  "org": "Org D1",
+  "group": "Group D"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "collaborator",
+  "org": "Org E2",
+  "group": "Group E"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "admin",
+  "org": "Org E1",
+  "group": "Group E"
+},
+{
+  "userEmail": "scott.esbrandt@snyk.io",
+  "role": "admin",
+  "org": "Org F1",
+  "group": "Group F"
+},
+{
+  "userEmail": "james.kearney@snyk.io",
+  "role": "collaborator",
+  "org": "Org F2",
+  "group": "Group F"
+},
+{
+  "userEmail": "scottesbrandt@snyk.io",
+  "role": "admin",
+  "org": "Org E1",
+  "group": "Group E"
+}
+]
+
