@@ -14,7 +14,12 @@ sync user org memberships from an external source into (your on-premise instance
 ```
 Usage: snyk-user-sync-tool [OPTIONS]
                 If no arguments are specified, values will be picked up from
-                environment variables
+                environment variables.
+
+                If pointing to a self-hosted or on-premise instance of Snyk,
+                SNYK_API is required to be set in your environment,
+                e.g. SNYK_API=https://my.snyk.domain/api. If omitted, then Snyk
+                SaaS is used.
 
 Options:
   --version          Show version number                               [boolean]
@@ -24,10 +29,6 @@ Options:
                      if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE
   --api-keys         list of api keys per group
                      if not specified, taken from SNYK_IAM_API_KEYS
-  --api-uri          for on-premise/self-hosted, API base URI like
-                     https://my.snyk.domain/api
-                     if not specified, taken from SNYK_API.  Snyk SaaS endpoint
-                     is used if neither are specified
   --debug            enable debug mode                                 [boolean]
   --help             Show help                                         [boolean]
 ```
