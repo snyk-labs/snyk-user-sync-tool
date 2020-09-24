@@ -86,7 +86,7 @@ export async function removeAcceptedPendingInvites(
     for (const pi of pendingInvites) {
       let found: boolean = false;
       for (const gm of groupMembers) {
-        if (gm.groupRole != 'admin') {
+        if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
           if (
             groupId == pi.groupId &&
             gm.email.toUpperCase() == pi.userEmail.toUpperCase()
@@ -173,6 +173,7 @@ export async function initializeDb() {
   } else {
     debug(`log dir ${common.LOG_DIR} already exists`);
   }
+  debug('Pruning logs and backup files if needed...');
   pruneDir(common.LOG_DIR);
   pruneDir(common.PREV_DIR);
 }

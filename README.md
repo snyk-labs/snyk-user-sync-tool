@@ -24,8 +24,10 @@ Options:
                      if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE
   --api-keys         list of api keys per group
                      if not specified, taken from SNYK_IAM_API_KEYS
-  --api-uri          API base URI like https://my.snyk.domain/api
-                     if not specified, taken from SNYK_API
+  --api-uri          for on-premise/self-hosted, API base URI like
+                     https://my.snyk.domain/api
+                     if not specified, taken from SNYK_API.  Snyk SaaS endpoint
+                     is used if neither are specified
   --debug            enable debug mode                                 [boolean]
   --help             Show help                                         [boolean]
 ```
@@ -38,15 +40,23 @@ run with debugging enabled: `DEBUG=* snyk-user-sync-tool`
 *nix
 ```
 export SNYK_IAM_MEMBERSHIP_FILE=<absolute path to user membership json file>
-export SNYK_API=https://<instance host or ip>/api
 export SNYK_IAM_API_KEYS='<group name>':<group key>,'<group name>':<group key>
+```
+
+if running self-hosted/on-premise Snyk, set the SNYK_API endpoint
+```
+export SNYK_API=https://<instance host or ip>/api
 ```
 
 windows
 ```
 set SNYK_IAM_MEMBERSHIP_FILE=<absolute path to user membership json file>
-set SNYK_API=https://<instance host or ip>/api
 set SNYK_IAM_API_KEYS='<group name>':<group key>,'<group name>':<group key>
+```
+
+if running self-hosted/on-premise Snyk, set the SNYK_API endpoint
+```
+set SNYK_API=https://<instance host or ip>/api
 ```
 
 - SNYK_IAM_API_KEYS -> you must use single quotes around group name

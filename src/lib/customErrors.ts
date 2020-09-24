@@ -11,3 +11,10 @@ export class InvalidEmail extends Error {
     this.name = 'InvalidEmailAddress';
   }
 }
+
+export class OrgIdNotFound extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OrgIdNotFound';
+  }
+}

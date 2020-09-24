@@ -13,6 +13,7 @@ import {
 import * as inputUtils from './inputUtils';
 import * as common from './common';
 import * as utils from './utils';
+import * as customErrors from './customErrors';
 
 const debug = debugLib('snyk:utils');
 const { execSync } = require('child_process');
@@ -94,7 +95,7 @@ export async function getSnykMembershipsToAdd(
 
     if (um.group.toUpperCase() == group.name.toUpperCase()) {
       for (const gm of groupMembers) {
-        if (gm.groupRole != 'admin') {
+        if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
           if (gm.email.toUpperCase() == um.userEmail.toUpperCase()) {
             for (const org of gm.orgs) {
               if (org.name == um.org) {
@@ -283,6 +284,7 @@ export async function addNewMemberships(
         } else {
           //begin user does not exist in group flow here
           let orgId = await getOrgIdFromName(membership.org, snykGroupOrgs);
+          console.log('orgId: ' + orgId);
           utils.log(
             ` - ${membership.userEmail} not in ${group.name}, sending invite [orgId: ${orgId}]...`,
           );
@@ -301,7 +303,11 @@ export async function addNewMemberships(
         );
       }
     } catch (err) {
-      if (['InvalidRole', 'InvalidEmailAddress'].indexOf(err.name) >= 0) {
+      if (
+        ['InvalidRole', 'InvalidEmailAddress', 'OrgIdNotFound'].indexOf(
+          err.name,
+        ) >= 0
+      ) {
         utils.log(`Record not processed, skipping: ${err.message}`);
         //log to log file
       }
@@ -311,7 +317,7 @@ export async function addNewMemberships(
 }
 
 export async function getOrgIdFromName(orgName: string, groupOrgs: GroupOrg[]) {
-  let result = '';
+  //let result = '';
   for (const o of groupOrgs) {
     debug(`Comparing ${o.name} to ${orgName}...`);
     if (o.name == orgName) {
@@ -319,7 +325,10 @@ export async function getOrgIdFromName(orgName: string, groupOrgs: GroupOrg[]) {
       return o.id;
     }
   }
-  return result;
+  //return result;
+  throw new customErrors.OrgIdNotFound(
+    `Org ID not found for Org Name "${orgName}" - check the name is correct`,
+  );
 }
 
 export function log(message: string) {
