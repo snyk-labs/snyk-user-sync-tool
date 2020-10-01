@@ -1,0 +1,94 @@
+{ 
+    "groups": [
+        {
+            "group_name": "GFT",
+            "admins": [],
+            "orgs": [
+                {
+                    "org_name": "GFIT_FINANCE_TREASURY",
+                    "n_of_collaborators": 12,
+                    "collaborators": [
+                        {
+                            "full_name": "Vandana Mehta",
+                            "email": "Vandana_Mehta@manulife.ca"
+                        },
+                        {
+                            "full_name": "Will Blades",
+                            "email": "Will_Blades@manulife.com"
+                        },
+                        {
+                            "full_name": "Stanko Petrovic",
+                            "email": "Stanko_Petrovic@manulife.com"
+                        }
+                    ]
+                },
+                {
+                    "org_name": "GFIT_HUMAN_RESOURCE",
+                    "n_of_collaborators": 6,
+                    "collaborators": [
+                        {
+                            "full_name": "PRINS JAMES",
+                            "email": "Prins_James@manulife.com"
+                        },
+                        {
+                            "full_name": "Vandana Mehta",
+                            "email": "Vandana_Mehta@manulife.ca"
+                        },
+                        {
+                            "full_name": "Temi Adetula",
+                            "email": "Temitope_Adetula@manulife.com"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "group_name": "CA",
+            "admins": [
+                {
+                    "full_name": "Yu Qing Wang",
+                    "email": "Yu_Qing_Wang@manulife.com"
+                },
+                {
+                    "full_name": "Winnie Lam",
+                    "email": "Winnie_X_Lam@manulife.com"
+                }
+            ],
+            "orgs": [
+                {
+                    "org_name": "CDT_COMMON",
+                    "n_of_collaborators": 11,
+                    "collaborators": [
+                        {
+                            "full_name": "Yahya Thai",
+                            "email": "Yahya_Thai@manulife.ca"
+                        },
+                        {
+                            "full_name": "Jonathan Gutschon",
+                            "email": "Jonathan_Gutschon@manulife.ca"
+                        }
+                    ]
+                },
+                {
+                    "org_name": "CDT_CDO",
+                    "n_of_collaborators": 11,
+                    "collaborators": [
+                        {
+                            "full_name": "Max-Philippe SODOGANDJI",
+                            "email": "MaxPhilippe_Sodogandji@manulife.ca"
+                        },
+                        {
+                            "full_name": "Ali Firooz",
+                            "email": "Ali_Firooz@manulife.ca"
+                        },
+                        {
+                            "full_name": "Scott Handfield",
+                            "email": "Scott_Handfield@manulife.ca"
+                        }
+                    ]
+                }
+            ],
+            "n_of_admins": 20
+        }
+    ]
+}

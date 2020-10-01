@@ -56,3 +56,21 @@ export interface OrgGroup {
   name: string;
   id: string;
 }
+
+export interface v2Groups {
+  groupName: string,
+  admins: v2User[],
+  orgs: v2Org[]
+}
+
+export interface v2User {
+  fullName: string,
+  email: string
+}
+
+export interface v2Org {
+   orgName: string,
+   collaborators: v2User[],
+   admins: v2User[]
+}
+
