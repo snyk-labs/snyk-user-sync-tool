@@ -34,10 +34,15 @@
   ],
   "homepage": "https://github.com/snyk-tech-services/snyk-user-sync-tool#readme",
   "dependencies": {
+<<<<<<< HEAD
     "debug": "^4.1.1",
     "ora": "^5.2.0",
     "p-map": "4.0.0",
     "snyk-request-manager": "^1.3.1",
+=======
+    "debug": "^4.3.0",
+    "snyk-request-manager": "^1.2.1",
+>>>>>>> fix: upgrade debug from 4.2.0 to 4.3.0
     "tsc": "^1.20150623.0",
     "yargs": "^15.3.1"
   },
