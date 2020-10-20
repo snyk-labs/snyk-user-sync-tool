@@ -6,13 +6,25 @@
 
 ## snyk-user-sync-tool
 sync user org memberships from an external source into (your on-premise instance) of Snyk
-- add users to orgs
-- update user org roles
-- remove users from orgs (only when using `--delete-missing` flag)
+- add/update users to orgs (when using `--add-new` flag
+- remove users from orgs (when using `--delete-missing` flag)
+
+```
+Use the `--dry-run` option to check the execution plan before making any changes to Snyk
+```
+
+This tool is designed to be flexible to to use for:
+1. _adding user memberships_ - using the `--add-new` flag, add user memberships to Snyk if they are found in the source file but not in Snyk
+2. _removing stale user memberships_ - using the `--delete-missing` flag, remove user memberships from Snyk if they are not found in the source file but are in Snyk
+3. _true bi-directional sync_ - using both `--add-new` and `--delete-missing`, sync the user memberships in both directions
+
+### Known Limitations
+* if users are completely new to the system, they will be sent an invitation to their first org.  after accepting, they will be made members of any other orgs as necessary on a subsequent run.  
+* group-level memberships are not currently supported, such as group admin.  If a group admin is found in snyk, but not in the source file, it will be flagged for review but no action will be taken.
 
 ### Usage
 ```
-Usage: snyk-user-sync-tool [OPTIONS]
+Usage: index.js [OPTIONS]
                 If no arguments are specified, values will be picked up from
                 environment variables.
 
@@ -23,12 +35,17 @@ Usage: snyk-user-sync-tool [OPTIONS]
 
 Options:
   --version          Show version number                               [boolean]
+  --add-new          add memberships if they are found in the
+                     membership-file and are not in Snyk
   --delete-missing   delete memberships from Snyk if they are found
                      to be missing from the membership-file (use with caution)
+  --v2               use v2 file format
   --membership-file  path to membership file
                      if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE
   --api-keys         list of api keys per group
                      if not specified, taken from SNYK_IAM_API_KEYS
+  --dry-run          print/log the execution plan without making any updates to
+                     Snyk
   --debug            enable debug mode                                 [boolean]
   --help             Show help                                         [boolean]
 ```
@@ -68,7 +85,11 @@ set SNYK_API=https://<instance host or ip>/api
 if connecting to a Snyk instance using a self-signed certificate, set environment variable `NODE_TLS_REJECT_UNAUTHORIZED=0`
 
 ### Membership File format
-Sample:
+
+There are two file formats supported:
+#### 1. User-based
+   flat representation, each record represents a user membership consisting of their userEmail, role, org, and group. 
+
 ```
 [
     {
@@ -97,6 +118,70 @@ Sample:
    }
 ]
 ```
+#### 2. Group-based
+   nested representation, comprising a set of groups each containing the group name, the set of orgs, and the set of both admins and collaborators within those orgs.  
+
+This looks like: 
+
+```
+{ 
+    "groups": [
+        {
+            "groupName": "Some Group",
+            "admins": [],
+            "orgs": [
+                {
+                    "orgName": "Some Org",
+                    "collaborators": [
+                        {
+                            "email": "user@email.address"
+                        },
+                        {
+                            "email": "user2@email.address"
+                        }
+                    ]
+                },
+                {
+                    "orgName": "Some Other Org",
+                    "collaborators": [
+                        {
+                            "email": "user3@email.address"
+                        },
+                        {
+                            "email": "user4@email.address"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "groupName": "Some Other Group",
+            "admins": [
+                {
+                    "email": "user3@email.address"
+                },
+                {
+                    "email": "user4@email.address"
+                }
+            ],
+            "orgs": [
+                {
+                    "orgName": "Yet Another Org",
+                    "collaborators": [
+                        {
+                            "email": "user6@email.address"
+                        },
+                        {
+                            "email": "user7@email.address"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+```
+
 - Ensure that the org name and group match exactly including the case
 - Possible values for role are *collaborator* and *admin*
 - Previous job run input is saved in `prev/` directory
@@ -108,6 +193,7 @@ Sample:
     - This means that if adding a user to snyk for the first time, to more than one org, then the first job run will invite them to the first org, and the next job run will add them to the remaining orgs.
 - After initial job run, pending invites are tracked locally in `db/pending_invites.json`
     - If this file is lost, it will be recreated.  Used to reduce calls to Snyk if invites are already known to be pending
+` Note: If invitations need to be re-sent, you must delete the invitation from Snyk and then delete db/pending_invites.json.  `
 
 ### Service Account setup
 - In order to populate the group names and keys, you will have to manually create the Groups and a service account in each group.
