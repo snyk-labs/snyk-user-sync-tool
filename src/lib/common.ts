@@ -5,6 +5,8 @@ export const PREV_DIR = BASE_DIR.concat('prev/');
 export const LOG_DIR = BASE_DIR.concat('log/');
 export const PENDING_INVITES_FILE = DB_DIR.concat('/pending_invites.json');
 export const LOG_LIMIT = 25;
+export var DRY_RUN: boolean = false;
+export function setDryRun(flag: boolean) { DRY_RUN = flag;}
 
 var m = new Date();
 export var LOG_ID =

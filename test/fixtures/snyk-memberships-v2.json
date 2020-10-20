@@ -1,94 +1,81 @@
 { 
     "groups": [
         {
-            "group_name": "GFT",
+            "groupName": "User Sync Test Group 1",
             "admins": [],
             "orgs": [
                 {
-                    "org_name": "GFIT_FINANCE_TREASURY",
-                    "n_of_collaborators": 12,
+                    "orgName": "User Sync Test Org 1-1",
                     "collaborators": [
                         {
-                            "full_name": "Vandana Mehta",
-                            "email": "Vandana_Mehta@manulife.ca"
+                            "fullName": "User Name",
+                            "email": "user@snyk.io"
                         },
                         {
-                            "full_name": "Will Blades",
-                            "email": "Will_Blades@manulife.com"
-                        },
-                        {
-                            "full_name": "Stanko Petrovic",
-                            "email": "Stanko_Petrovic@manulife.com"
+                            "fullName": "User Name2",
+                            "email": "user2@snyk.io"
                         }
                     ]
                 },
                 {
-                    "org_name": "GFIT_HUMAN_RESOURCE",
-                    "n_of_collaborators": 6,
+                    "orgName": "Some Other Org",
                     "collaborators": [
                         {
-                            "full_name": "PRINS JAMES",
-                            "email": "Prins_James@manulife.com"
+                            "fullName": "User Name4",
+                            "email": "user4@snyk.io"
                         },
                         {
-                            "full_name": "Vandana Mehta",
-                            "email": "Vandana_Mehta@manulife.ca"
-                        },
-                        {
-                            "full_name": "Temi Adetula",
-                            "email": "Temitope_Adetula@manulife.com"
+                            "fullName": "User Name5",
+                            "email": "user5@snyk.io"
                         }
                     ]
                 }
             ]
         },
         {
-            "group_name": "CA",
+            "groupName": "User Sync Test Group 2",
             "admins": [
                 {
-                    "full_name": "Yu Qing Wang",
-                    "email": "Yu_Qing_Wang@manulife.com"
+                    "fullName": "User Name3",
+                    "email": "user3@snyk.io"
                 },
                 {
-                    "full_name": "Winnie Lam",
-                    "email": "Winnie_X_Lam@manulife.com"
+                    "fullName": "User Name4",
+                    "email": "user4@snyk.io"
+                },
+                {
+                    "fullName": "Scott Esbrandt",
+                    "email": "scott.esbrandt@snyk.io"
                 }
             ],
             "orgs": [
                 {
-                    "org_name": "CDT_COMMON",
-                    "n_of_collaborators": 11,
+                    "orgName": "User Sync Test Org 2-1",
                     "collaborators": [
                         {
-                            "full_name": "Yahya Thai",
-                            "email": "Yahya_Thai@manulife.ca"
+                            "fullName": "User Name12",
+                            "email": "user13@snyk.io"
                         },
                         {
-                            "full_name": "Jonathan Gutschon",
-                            "email": "Jonathan_Gutschon@manulife.ca"
+                            "fullName": "User Name13",
+                            "email": "user14@snyk.io"
                         }
                     ]
                 },
                 {
-                    "org_name": "CDT_CDO",
-                    "n_of_collaborators": 11,
+                    "orgName": "User Sync Test Org 2-5",
                     "collaborators": [
                         {
-                            "full_name": "Max-Philippe SODOGANDJI",
-                            "email": "MaxPhilippe_Sodogandji@manulife.ca"
+                            "fullName": "User Name10",
+                            "email": "user10@snyk.io"
                         },
                         {
-                            "full_name": "Ali Firooz",
-                            "email": "Ali_Firooz@manulife.ca"
-                        },
-                        {
-                            "full_name": "Scott Handfield",
-                            "email": "Scott_Handfield@manulife.ca"
+                            "fullName": "User Name11",
+                            "email": "user11@snyk.io"
                         }
                     ]
                 }
-            ],
-            "n_of_admins": 20
+            ]
         }
     ]
 }

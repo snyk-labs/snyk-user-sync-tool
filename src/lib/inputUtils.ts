@@ -52,7 +52,7 @@ export async function getUniqueOrgs(userMemberships: Membership[]) {
 
 async function getPendingInvites(): Promise<PendingInvite[]> {
   let pendingInvites: PendingInvite[] = [];
-  utils.log(` - Checking Pending Invites... `);
+  utils.log(` - Checking status of pending invites... `);
   if (fs.statSync(common.PENDING_INVITES_FILE)['size'] == 0) {
     debug(' - None Found (0 byte file)');
     return [];
@@ -108,10 +108,12 @@ export async function removeAcceptedPendingInvites(
     debug('writing to invite file: ');
     debug(result);
 
-    fs.writeFileSync(
-      common.PENDING_INVITES_FILE,
-      JSON.stringify(result, null, 4),
-    );
+    if (!common.DRY_RUN) {
+      fs.writeFileSync(
+        common.PENDING_INVITES_FILE,
+        JSON.stringify(result, null, 4),
+      );
+    }
   }
 }
 

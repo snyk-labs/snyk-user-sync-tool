@@ -50,10 +50,6 @@ const argv = yargs
                        if not specified, taken from SNYK_IAM_API_KEYS`,
       demandOption: false,
     },
-    'silent': {
-      describe: `suppress interactive confirmation prompts and assume Yes`,
-      demandOption: false,
-    },
     'dry-run': {
       describe: `print/log the execution plan without making any updates to Snyk`,
       demandOption: false,
@@ -154,7 +150,6 @@ async function processMembershipsV2() {
   
     // process each unique group sequentially
     for (const g of sourceGroups) {
-      console.log('processing sourceGroup: ' + g.groupName)
       let groupStatus: string[] = await groupsMetadata.getGroupStatusByName(
         g.groupName,
       );
@@ -177,8 +172,7 @@ async function processMembershipsV2() {
   
         // process any new memberships in the input file
         if (addNewFlag == true) {
-          console.log('will add new memberships here')
-          //await utils.addNewMemberships(sourceMemberships, group);
+          await utils.addNewMembershipsV2(sourceGroups, group);
         }
       } else {
         utils.log(
@@ -225,6 +219,7 @@ async function processMemberships() {
   
       sourceMemberships = await inputUtils.sortUserMemberships(sourceMemberships);
     } catch (err) {
+      console.log('are you using the correct memberships file format?')
       process.exit(1);
     }
   

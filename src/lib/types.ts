@@ -59,8 +59,8 @@ export interface OrgGroup {
 
 export interface v2Groups {
   groupName: string,
-  admins: v2User[],
-  orgs: v2Org[]
+  admins?: v2User[],
+  orgs?: v2Org[]
 }
 
 export interface v2User {
@@ -70,7 +70,7 @@ export interface v2User {
 
 export interface v2Org {
    orgName: string,
-   collaborators: v2User[],
-   admins: v2User[]
+   collaborators?: v2User[],
+   admins?: v2User[]
 }
 
