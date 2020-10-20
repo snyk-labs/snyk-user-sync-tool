@@ -1,0 +1,81 @@
+{ 
+    "groups": [
+        {
+            "groupName": "User Sync Test Group 1",
+            "admins": [],
+            "orgs": [
+                {
+                    "orgName": "User Sync Test Org 1-1",
+                    "collaborators": [
+                        {
+                            "fullName": "User Name",
+                            "email": "user@snyk.io"
+                        },
+                        {
+                            "fullName": "User Name2",
+                            "email": "user2@snyk.io"
+                        }
+                    ]
+                },
+                {
+                    "orgName": "Some Other Org",
+                    "collaborators": [
+                        {
+                            "fullName": "User Name4",
+                            "email": "user4@snyk.io"
+                        },
+                        {
+                            "fullName": "User Name5",
+                            "email": "user5@snyk.io"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "groupName": "User Sync Test Group 2",
+            "admins": [
+                {
+                    "fullName": "User Name3",
+                    "email": "user3@snyk.io"
+                },
+                {
+                    "fullName": "User Name4",
+                    "email": "user4@snyk.io"
+                },
+                {
+                    "fullName": "Scott Esbrandt",
+                    "email": "scott.esbrandt@snyk.io"
+                }
+            ],
+            "orgs": [
+                {
+                    "orgName": "User Sync Test Org 2-1",
+                    "collaborators": [
+                        {
+                            "fullName": "User Name12",
+                            "email": "user13@snyk.io"
+                        },
+                        {
+                            "fullName": "User Name13",
+                            "email": "user14@snyk.io"
+                        }
+                    ]
+                },
+                {
+                    "orgName": "User Sync Test Org 2-5",
+                    "collaborators": [
+                        {
+                            "fullName": "User Name10",
+                            "email": "user10@snyk.io"
+                        },
+                        {
+                            "fullName": "User Name11",
+                            "email": "user11@snyk.io"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
