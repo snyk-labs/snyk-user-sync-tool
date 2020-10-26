@@ -49,10 +49,14 @@ Options:
   --debug            enable debug mode                                 [boolean]
   --help             Show help                                         [boolean]
 ```
+Example:
+```
+snyk-user-sync-tool --v2 --dry-run --membership-file=snyk-memberships-v2.json --add-new --delete-missing
+```
+run with debugging enabled: `DEBUG=* snyk-user-sync-tool`
 
 If initial job run, `db`, `prev`, and `log` directories will be created
 
-run with debugging enabled: `DEBUG=* snyk-user-sync-tool`
 
 ### Setup Environment
 *nix

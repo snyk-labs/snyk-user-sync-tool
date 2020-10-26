@@ -1,0 +1,26 @@
+[
+    {
+            "userEmail": "user1@email.com",
+  	    "role": "collaborator",
+  	    "org": "Org Name 1-1",
+  	    "group": "Group Name 1"
+    },
+    {
+  	    "userEmail": "user2@email.com",
+  	    "role": "admin",
+  	    "org": "Org Name 1-1",
+  	    "group": "Group Name 1"
+    },
+    {
+  	    "userEmail": "user1@email.com",
+  	    "role": "collaborator",
+  	    "org": "Org Name 2-1",
+  	    "group": "Group Name 2"
+    },
+    {
+  	    "userEmail": "user2@email.com",
+  	    "role": "admin",
+  	    "org": "Org Name 2-2",
+  	    "group": "Group Name 2"
+   }
+]

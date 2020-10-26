@@ -1,4 +1,4 @@
-import { validateUserMembership } from '../src/lib/inputUtils'
+import { validateUserMembership, readFileToJson } from '../src/lib/inputUtils'
 import { GroupMember, Membership, PendingInvite } from '../src/lib/types'
 import * as customErrors from '../src/lib/customErrors'
 
@@ -20,6 +20,6 @@ const membershipWithInvalidEmail: Membership = {
       await expect(validateUserMembership(membershipWithInvalidRole)).rejects.toThrow(customErrors.InvalidRole)
     })
     it('catch invalid email address in membership file', async () => {
-        await expect(validateUserMembership(membershipWithInvalidEmail)).rejects.toThrow(customErrors.InvalidEmail)
-      })
+      await expect(validateUserMembership(membershipWithInvalidEmail)).rejects.toThrow(customErrors.InvalidEmail)
+    })
   })
