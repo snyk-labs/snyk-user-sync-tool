@@ -218,3 +218,6 @@ is also logged.
 
 ### Logging
 Each job run has a log user-sync-run-<mm_dd_yy_mm_ss>.log located in the `logs/` directory local to where the application is installed.
+
+### Contributing
+See guidelines [here](.github/CONTRIBUTING.md)
