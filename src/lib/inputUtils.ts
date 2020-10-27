@@ -9,20 +9,20 @@ import * as customErrors from './customErrors';
 
 const debug = debugLib('snyk:inputUtils');
 
-export async function sortUserMemberships(userMemberships: Membership[]) {
+/*export async function sortUserMemberships(userMemberships: Membership[]) {
   userMemberships.sort((a: any, b: any) =>
     a.group > b.group ? 1 : a.group === b.group ? (a.org > b.org ? 1 : -1) : -1,
   );
   return userMemberships;
-}
+}*/
 
-export async function backupUserMemberships(membershipFile: string) {
+export async function backupUserMemberships() {
   //store existing input file in prev directory
-  let filename: string = path.basename(membershipFile);
+  let filename: string = path.basename(common.MEMBERSHIP_FILE);
   let destination: string = common.PREV_DIR.concat(
     `${filename}-${common.LOG_ID}`,
   );
-  fs.copyFile(membershipFile, destination, (err) => {
+  fs.copyFile(common.MEMBERSHIP_FILE, destination, (err) => {
     if (err) throw err;
     utils.log(`\nmembership file backed up to ${destination}`);
     return true;
@@ -108,7 +108,7 @@ export async function removeAcceptedPendingInvites(
     debug('writing to invite file: ');
     debug(result);
 
-    if (!common.DRY_RUN) {
+    if (!common.DRY_RUN_FLAG) {
       fs.writeFileSync(
         common.PENDING_INVITES_FILE,
         JSON.stringify(result, null, 4),
@@ -221,13 +221,17 @@ export async function readFileToJson(filePath: string) {
   }
 }
 
-export async function validateUserMembership(userMembership: Membership) {
+export async function validateUserMembership(snykMembership: {
+  userEmail: string;
+  role: string;
+  org: string;
+}) {
   var reEmail: RegExp = /\S+@\S+\.\S+/;
 
   if (
     !(
       ['admin'.toUpperCase(), 'collaborator'.toUpperCase()].indexOf(
-        userMembership.role.toUpperCase(),
+        snykMembership.role.toUpperCase(),
       ) >= 0
     )
   ) {
@@ -235,7 +239,7 @@ export async function validateUserMembership(userMembership: Membership) {
       'Invalid value for role. Acceptable values are one of [admin, collaborator]',
     );
   }
-  if (reEmail.test(userMembership.userEmail) == false) {
+  if (reEmail.test(snykMembership.userEmail) == false) {
     //console.log('email regex = false')
     throw new customErrors.InvalidEmail(
       'Invalid email address format. Please verify',
