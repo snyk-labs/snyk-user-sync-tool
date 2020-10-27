@@ -49,13 +49,20 @@ Options:
   --debug            enable debug mode                                 [boolean]
   --help             Show help                                         [boolean]
 ```
-Example:
+__Example__:
 ```
 snyk-user-sync-tool --v2 --dry-run --membership-file=snyk-memberships-v2.json --add-new --delete-missing
 ```
 run with debugging enabled: `DEBUG=* snyk-user-sync-tool`
 
 If initial job run, `db`, `prev`, and `log` directories will be created
+
+
+__Note: there are two different supported file formats__ 
+- The default is the user membership flat structure
+- v2 format (used in conjunction with the --v2 flag) is a nested structure per group
+
+For more details, see the [Membership file format](#membership-file-format) section.
 
 
 ### Setup Environment
@@ -91,7 +98,7 @@ if connecting to a Snyk instance using a self-signed certificate, set environmen
 ### Membership File format
 
 There are two file formats supported:
-#### 1. User-based
+#### 1. User-based (default)
    flat representation, each record represents a user membership consisting of their userEmail, role, org, and group. 
 
 ```
@@ -122,7 +129,7 @@ There are two file formats supported:
    }
 ]
 ```
-#### 2. Group-based
+#### 2. Group-based (--v2)
    nested representation, comprising a set of groups each containing the group name, the set of orgs, and the set of both admins and collaborators within those orgs.  
 
 This looks like: 
