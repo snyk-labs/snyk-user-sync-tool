@@ -96,7 +96,7 @@ export async function processMemberships() {
             );
           } else {
             utils.log(`${gmd.groupName} not found in source, skipping...`);
-            break;
+            continue;
           }
         } else {
           const sourceMembershipsForGroup = {
@@ -113,7 +113,7 @@ export async function processMemberships() {
             );
           } else {
             utils.log(`${gmd.groupName} not found in source, skipping...`);
-            break;
+            continue;
           }
         }
 
