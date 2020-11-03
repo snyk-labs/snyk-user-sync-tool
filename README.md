@@ -24,7 +24,7 @@ This tool is designed to be flexible to to use for:
 
 ### Usage
 ```
-Usage: index.js [OPTIONS]
+Usage: snyk-user-sync-tool [OPTIONS]
                 If no arguments are specified, values will be picked up from
                 environment variables.
 
