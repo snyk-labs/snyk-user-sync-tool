@@ -227,16 +227,17 @@ export async function validateUserMembership(snykMembership: {
   org: string;
 }) {
   var reEmail: RegExp = /\S+@\S+\.\S+/;
-
+  let validRoles: string[]  = await readFileToJson(common.VALID_ROLES_FILE);
+  
   if (
     !(
-      ['admin'.toUpperCase(), 'collaborator'.toUpperCase()].indexOf(
+      (validRoles.map(x => {return x.toUpperCase(); })).indexOf(
         snykMembership.role.toUpperCase(),
       ) >= 0
     )
   ) {
     throw new customErrors.InvalidRole(
-      'Invalid value for role. Acceptable values are one of [admin, collaborator]',
+      `Invalid value for role. Acceptable values are one of [${validRoles}]`,
     );
   }
   if (reEmail.test(snykMembership.userEmail) == false) {
