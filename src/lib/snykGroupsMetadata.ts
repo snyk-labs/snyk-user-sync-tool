@@ -1,6 +1,6 @@
 import { requestsManager } from 'snyk-request-manager';
 import * as debugLib from 'debug';
-import { GroupMetadata } from './types';
+import { GroupMetadata, GroupOrg } from './types';
 import * as common from './common';
 
 const debug = debugLib('snyk:snykGroupsMetadata');
@@ -35,8 +35,14 @@ export class snykGroupsMetadata {
           verb: 'GET',
           url: `/orgs`,
         });
-        debug(response.data);
-        let org = response.data.orgs[0];
+        //debug(JSON.stringify(response.data, null,2));
+        let filteredOrgs = response.data.orgs.filter(function(org: GroupOrg) {
+          if (org.group != null) {
+            return org.group.name === groupName;
+          }
+        });
+        let org = filteredOrgs[0];
+        debug('filtered org -> ' + JSON.stringify(org, null, 2));
         result = {
           groupName: org.group.name,
           groupId: org.group.id,
