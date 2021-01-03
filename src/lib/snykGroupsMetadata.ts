@@ -37,10 +37,12 @@ export class snykGroupsMetadata {
         });
         //debug(JSON.stringify(response.data, null,2));
         let filteredOrgs = response.data.orgs.filter(function(org: GroupOrg) {
-          if (org.group != null) {return org.group.name === groupName}
-        })
+          if (org.group != null) {
+            return org.group.name === groupName;
+          }
+        });
         let org = filteredOrgs[0];
-        debug('filtered org -> ' + JSON.stringify(org,null,2))
+        debug('filtered org -> ' + JSON.stringify(org, null, 2));
         result = {
           groupName: org.group.name,
           groupId: org.group.id,

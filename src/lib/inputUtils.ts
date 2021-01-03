@@ -227,13 +227,15 @@ export async function validateUserMembership(snykMembership: {
   org: string;
 }) {
   var reEmail: RegExp = /\S+@\S+\.\S+/;
-  let validRoles: string[]  = await readFileToJson(common.VALID_ROLES_FILE);
-  
+  let validRoles: string[] = await readFileToJson(common.VALID_ROLES_FILE);
+
   if (
     !(
-      (validRoles.map(x => {return x.toUpperCase(); })).indexOf(
-        snykMembership.role.toUpperCase(),
-      ) >= 0
+      validRoles
+        .map((x) => {
+          return x.toUpperCase();
+        })
+        .indexOf(snykMembership.role.toUpperCase()) >= 0
     )
   ) {
     throw new customErrors.InvalidRole(
