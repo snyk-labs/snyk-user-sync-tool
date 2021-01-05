@@ -19,8 +19,10 @@ import { snykGroupsMetadata } from './snykGroupsMetadata';
 import * as debugLib from 'debug';
 import * as utils from './utils';
 import { Membership, v2Group, PendingInvite, v1Group } from './types';
+import * as ora from 'ora'
 
 const debug = debugLib('snyk:app');
+const spinner = ora();
 
 export async function processMemberships() {
   var sourceGroups;
@@ -68,7 +70,7 @@ export async function processMemberships() {
 
   // process each unique group sequentially
   for (const gmd of await groupsMetadata.getAllGroupsMetadata()) {
-    debug(`groupMetadata: ${gmd}`);
+    debug(`groupMetadata: ${JSON.stringify(gmd)}`);
     var groupStatus: string[] = await groupsMetadata.getGroupStatusByName(
       gmd.groupName,
     );
@@ -117,9 +119,11 @@ export async function processMemberships() {
           }
         }
 
+        utils.log(`Analyzing ${gmd.groupName} [${groupId}]`);
+        spinner.start()
         await group.init();
+        spinner.stop()
         debug(`group: ${group}`);
-        utils.log(`\nProcessing ${gmd.groupName} [${groupId}]`);
 
         //remove any 'pending invites' that have since been accepted
         await removeAcceptedPendingInvites(groupId, await group.getMembers());

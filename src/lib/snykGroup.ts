@@ -1,5 +1,6 @@
 import { requestsManager } from 'snyk-request-manager';
 import * as debugLib from 'debug';
+import * as pMap from 'p-map';
 import * as common from './common';
 import * as utils from './utils';
 import * as inputUtils from './inputUtils';
@@ -7,7 +8,6 @@ import * as customErrors from './customErrors';
 import {
   GroupMember,
   GroupOrg,
-  Membership,
   v2Group,
   v1Group,
   PendingMembership,
@@ -21,6 +21,9 @@ export class snykGroup {
   key: string;
   sourceMemberships: v2Group | v1Group;
   private _members: GroupMember[] = [];
+  private _orgs: GroupOrg[] = [];
+  private _snykMembershipQueue: any[];
+  private _snykMembershipRemovalQueue: any[];
   private _buffer: number = 250;
   private _requestManager: requestsManager;
 
@@ -34,6 +37,9 @@ export class snykGroup {
     this.name = name;
     this.key = key;
     this.sourceMemberships = sourceMemberships;
+    this._snykMembershipQueue = [];
+    this._snykMembershipRemovalQueue = []
+
     this._requestManager = new requestsManager({
       snykToken: this.key,
       userAgentPrefix: 'snyk-user-sync-tool',
@@ -42,7 +48,6 @@ export class snykGroup {
 
   async init() {
     // initialize group object with members
-    let members: GroupMember[] = [];
     try {
       let response = await this._requestManager.request({
         verb: 'GET',
@@ -53,9 +58,22 @@ export class snykGroup {
     } catch (err) {
       utils.log(err);
     }
+
+    try {
+      let response = await this._requestManager.request({
+        verb: 'GET',
+        url: `/orgs`,
+      });
+      this._orgs = response.data.orgs;
+    } catch (err) {
+      utils.log(err);
+    }
   }
   async getMembers() {
     return this._members;
+  }
+  async getOrgs() {
+    return this._orgs;
   }
   userExists(searchEmail: string) {
     for (const membership of this._members) {
@@ -67,19 +85,6 @@ export class snykGroup {
       }
     }
     return false;
-  }
-  private async getOrgs(): Promise<GroupOrg[]> {
-    let result: GroupOrg[] = [];
-    try {
-      let response = await this._requestManager.request({
-        verb: 'GET',
-        url: `/orgs`,
-      });
-      result = response.data.orgs;
-    } catch (err) {
-      utils.log(err);
-    }
-    return result;
   }
   async inviteUserToOrg(email: string, role: string, org: string) {
     let inviteBody = `{
@@ -106,136 +111,11 @@ export class snykGroup {
       utils.log(err);
     }
   }
-  async sendInvite(email: string, role: string, orgName: string, org: string) {
-    let response = await this.inviteUserToOrg(email, role, org);
-    debug('invite user response:');
-    debug(response.data);
-
-    if (response != null) {
-      debug('recording pending invite:');
-      debug(`${this.name}, ${this.id}, ${orgName}, ${org}, ${email}`);
-      await utils.recordPendingInvite(this.name, this.id, orgName, org, email);
-      return true;
-    }
-    return false;
+  private async queueSnykMembership(snykMembership: PendingMembership) {
+    this._snykMembershipQueue.push(snykMembership)
   }
-  private async updateExistingMembershipRole(
-    orgId: string,
-    userId: string,
-    role: string,
-  ) {
-    let updateBody = `{
-            "role": "${role}"
-        }
-        `;
-    debug(`updateBody: ${updateBody}`);
-    try {
-      return await this._requestManager.request({
-        verb: 'PUT',
-        url: `/org/${orgId}/members/${userId}`,
-        body: updateBody,
-      });
-    } catch (err) {
-      utils.log(err);
-    }
-  }
-  private async do_addOrgMembership(snykMembership: {
-    userEmail: string;
-    role: string;
-    org: string;
-  }) {
-    //get orgId and userId for addition
-    const orgId = await this.getOrgIdFromName(snykMembership.org);
-    const userId = await this.getUserIdFromEmail(snykMembership.userEmail);
-    let updateBody = `{
-            "userId": "${userId}",
-            "role": "${snykMembership.role}"
-        }
-        `;
-    try {
-      //sleep(this._buffer)
-      return await this._requestManager.request({
-        verb: 'POST',
-        url: `/group/${this.id}/org/${orgId}/members`,
-        body: updateBody,
-      });
-    } catch (err) {
-      utils.log(err);
-    }
-  }
-  private async removeOrgMembership(snykMembership: {
-    userEmail: string;
-    role: string;
-    org: string;
-  }) {
-    try {
-      //get orgId and userId for removal
-      const orgId = await this.getOrgIdFromName(snykMembership.org);
-      const userId = await this.getUserIdFromEmail(snykMembership.userEmail);
-      return await this._requestManager.request({
-        verb: 'DELETE',
-        url: `/org/${orgId}/members/${userId}`,
-      });
-    } catch (err) {
-      utils.log(err);
-    }
-  }
-  private async addOrgMembership(snykMembership: PendingMembership) {
-    try {
-      await inputUtils.validateUserMembership(snykMembership);
-
-      if (
-        (await utils.isPendingInvite(snykMembership.userEmail, this.id)) ==
-        false
-      ) {
-        if (this.userExists(snykMembership.userEmail)) {
-          //begin user exists in group flow
-          debug('userExistsInOrg: ' + snykMembership.userExistsInOrg);
-          if (snykMembership.userExistsInOrg == 'true') {
-            debug('Adding existing group-org member to new org');
-            //change role -- update member of org
-            let orgId = await this.getOrgIdFromName(snykMembership.org);
-            this.updateExistingMembershipRole(
-              orgId,
-              await this.getUserIdFromEmail(snykMembership.userEmail),
-              snykMembership.role,
-            );
-          } else {
-            debug(' - Adding unassociated member');
-            // add a new org member from existing userId
-            let orgId = await this.getOrgIdFromName(snykMembership.org);
-            this.do_addOrgMembership(snykMembership);
-          }
-        } else {
-          //begin user does not exist in group flow here
-          let orgId = await this.getOrgIdFromName(snykMembership.org);
-          console.log('orgId: ' + orgId);
-          utils.log(
-            ` - ${snykMembership.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
-          );
-          let res = await this.sendInvite(
-            snykMembership.userEmail,
-            snykMembership.role,
-            snykMembership.org,
-            orgId,
-          );
-          //console.log(res)
-        }
-      } else {
-        utils.log(
-          ` - skipping ${snykMembership.userEmail}, invite already pending...`,
-        );
-      }
-    } catch (err) {
-      if (
-        ['InvalidRole', 'InvalidEmailAddress', 'OrgIdNotFound'].indexOf(
-          err.name,
-        ) >= 0
-      ) {
-        utils.log(`Record not processed, skipping: ${err.message}`);
-        //log to log file
-      }
-    }
+  private async queueSnykMembershipRemoval(snykMembershipRemoval: {userEmail: string, role: string, org: string}) {
+    this._snykMembershipRemovalQueue.push(snykMembershipRemoval)
   }
   async getOrgIdFromName(orgName: string) {
     //let result = '';
@@ -262,7 +142,132 @@ export class snykGroup {
     }
     return '';
   }
+  private async processQueue(queue: any[]) {
+    const results = [];
+    var numProcessed: number = 0
+    console.log(`Processing ${queue.length} requests to API`);
+    utils.log(' - Waiting for updates to complete...')
+
+    await pMap(
+      queue,
+      async (reqData) => {
+        try {
+          utils.printProgress(` - ${++numProcessed}/${queue.length} completed`);
+          const res = await this._requestManager.request(reqData);
+          results.push(res);
+        } catch (e) {
+          utils.log(`${e}`)
+          debug(e);
+        }
+      },
+      { concurrency: 10 },
+    );
+    console.log('\n')
+    utils.log(`${results.length} updates successfully processed`)
+  }
+  private async addSnykMembershipsFromQueue() {
+    let userMembershipQueue = []
+
+    for (const sm of this._snykMembershipQueue) {
+      try {
+        await inputUtils.validateUserMembership(sm);
+        if (
+          (await utils.isPendingInvite(sm.userEmail, this.id)) ==
+          false
+        ) {
+          if (this.userExists(sm.userEmail)) {
+            //begin user exists in group flow
+            const orgId = await this.getOrgIdFromName(sm.org);
+            const userId = await this.getUserIdFromEmail(sm.userEmail);
+            debug('userExistsInOrg: ' + sm.userExistsInOrg);
+            if (sm.userExistsInOrg == 'true') { //user already in org, so just update existing record
+              debug('Updating existing group-org member role');
+              //change role -- update member of org
+              let updateBody = `{
+                "role": "${sm.role}"
+              }`;
+
+              debug(`updateBody: ${updateBody}`);
+
+              userMembershipQueue.push({
+                verb: 'PUT',
+                url: `/org/${orgId}/members/${userId}`,
+                body: updateBody,
+              });
+            }
+            else { // user not in org, add them
+              let updateBody = `{
+                "userId": "${userId}",
+                "role": "${sm.role}"
+              }`;
+
+              userMembershipQueue.push({
+                verb: "POST",
+                url: `/group/${this.id}/org/${orgId}/members`,
+                body: updateBody
+              })
+            }
+          } else { //user not in group, send invite
+            let orgId = await this.getOrgIdFromName(sm.org);
+            console.log('orgId: ' + orgId);
+            utils.log(
+              ` - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
+            );
+
+            let inviteBody = `{
+              "email": "${sm.userEmail}"
+            }`;
+            if (
+              sm.role.toUpperCase() == 'ADMIN' ||
+              sm.role.toUpperCase() == 'ADMINISTRATOR'
+            ) {
+              inviteBody = `{
+                        "email": "${sm.userEmail}",
+                        "isAdmin": true
+                    }
+                    `;
+            }
+            userMembershipQueue.push({
+              verb: 'POST',
+              url: `/org/${orgId}/invite`,
+              body: inviteBody,
+            });
+            debug('recording pending invite:');
+            debug(`${this.name}, ${this.id}, ${sm.org}, ${orgId}, ${sm.userEmail}`);
+            await utils.recordPendingInvite(this.name, this.id, sm.org, orgId, sm.userEmail);
+          }
+        } else {
+          utils.log(
+            ` - skipping ${sm.userEmail}, invite already pending...`,
+          );
+        }
+      }
+      catch(err) {
+        // do something
+      }
+    }
+    debug(userMembershipQueue)
+    this.processQueue(userMembershipQueue)
+  }
+  private async removeSnykMembershipsFromQueue() {
+    let membershipRemovalQueue = [] 
+    
+    for (const mr of this._snykMembershipRemovalQueue) {
+      //get orgId and userId for removal
+      const orgId = await this.getOrgIdFromName(mr.org);
+      const userId = await this.getUserIdFromEmail(mr.userEmail);
+      membershipRemovalQueue.push({
+        verb: 'DELETE',
+        url: `/org/${orgId}/members/${userId}`,
+      });
+    }
+
+    debug(membershipRemovalQueue)
+    
+    this.processQueue(membershipRemovalQueue)
+  }
   async addNewMemberships() {
+    utils.log(` - Checking for new memberships...`);
     var membershipsToAdd = await this.getSnykMembershipsToAdd();
     utils.log(` - ${membershipsToAdd.length} Snyk memberships to add found...`);
     debug(membershipsToAdd);
@@ -273,10 +278,11 @@ export class snykGroup {
         `[${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}]`,
       );
       if (!common.DRY_RUN_FLAG) {
-        await this.addOrgMembership(snykMembership);
+        await this.queueSnykMembership(snykMembership);
       }
       i++;
     }
+    this.addSnykMembershipsFromQueue()
   }
   async removeStaleMemberships() {
     var membershipsToRemove = await this.getSnykMembershipsToRemove();
@@ -292,10 +298,11 @@ export class snykGroup {
         ` - ${i} of ${membershipsToRemove.length} [${snykMembership.org} | ${snykMembership.userEmail}]`,
       );
       if (!common.DRY_RUN_FLAG) {
-        await this.removeOrgMembership(snykMembership);
+        await this.queueSnykMembershipRemoval(snykMembership);
       }
       i++;
     }
+    this.removeSnykMembershipsFromQueue()
   }
   private sourceIsV1() {
     return (this.sourceMemberships as v1Group).members !== undefined;

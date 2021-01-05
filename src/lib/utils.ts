@@ -89,3 +89,8 @@ export function log(message: string) {
     LOG_TIMESTAMP.concat(message.replace(/^\s+|\s+$/g, '')).concat('\n'),
   );
 }
+
+export function printProgress(progress:string){
+  process.stdout.cursorTo(0);
+  process.stdout.write(`${progress}`);
+}
