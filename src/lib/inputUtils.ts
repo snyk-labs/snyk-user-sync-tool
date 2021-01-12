@@ -24,7 +24,7 @@ export async function backupUserMemberships() {
   );
   fs.copyFile(common.MEMBERSHIP_FILE, destination, (err) => {
     if (err) throw err;
-    utils.log(`\nmembership file backed up to ${destination}`);
+    debug(`\nmembership file backed up to ${destination}`);
     return true;
   });
 }
