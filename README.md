@@ -23,6 +23,7 @@ This tool is designed to be flexible to to use for:
 * group-level memberships are not currently supported, such as group admin.  If a group admin is found in snyk, but not in the source file, it will be flagged for review but no action will be taken.
 
 ### Usage
+Grab a [release binary](https://github.com/snyk-tech-services/snyk-user-sync-tool/releases)
 ```
 Usage: snyk-user-sync-tool [OPTIONS]
                 If no arguments are specified, values will be picked up from
