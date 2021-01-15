@@ -53,16 +53,16 @@ export async function isPendingInvite(userEmail: string, groupId: string) {
     common.PENDING_INVITES_FILE,
   );
   debug(pendingInvites);
-
+  debug(
+    `checking if pending invitation exists for ${userEmail} in group ${groupId}`,
+  );
   for (const pi of pendingInvites) {
-    debug(
-      `comparing ${pi.userEmail} to ${userEmail}, ${pi.groupId} to ${groupId}`,
-    );
     if (pi.userEmail == userEmail && pi.groupId == groupId) {
-      debug('Invite is pending');
+      debug(`Invite is pending for ${userEmail} in group ${groupId}`);
       return true;
     }
   }
+  debug(`NO invite is pending for ${userEmail} in group ${groupId}`);
   return false;
 }
 
@@ -90,7 +90,7 @@ export function log(message: string) {
   );
 }
 
-export function printProgress(progress:string){
+export function printProgress(progress: string) {
   process.stdout.cursorTo(0);
   process.stdout.write(`${progress}`);
 }

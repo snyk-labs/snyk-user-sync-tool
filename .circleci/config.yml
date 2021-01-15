@@ -12,7 +12,7 @@ jobs:
             - run: npx tsc
             - snyk/scan:
                 fail-on-issues: true
-                monitor-on-build: true
+                monitor-on-build: false
                 token-variable: SNYK_TOKEN
             - run: npm run test:unit
             - run: 

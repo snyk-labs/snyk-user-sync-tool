@@ -19,10 +19,11 @@ import { snykGroupsMetadata } from './snykGroupsMetadata';
 import * as debugLib from 'debug';
 import * as utils from './utils';
 import { Membership, v2Group, PendingInvite, v1Group } from './types';
-import * as ora from 'ora'
+import * as ora from 'ora';
 
 const debug = debugLib('snyk:app');
 const spinner = ora();
+spinner.color = 'white';
 
 export async function processMemberships() {
   var sourceGroups;
@@ -30,12 +31,12 @@ export async function processMemberships() {
   var groupsMetadata = new snykGroupsMetadata(API_KEYS);
 
   await groupsMetadata.init();
-  debug(`groupsMetadata: ${groupsMetadata}`);
+  debug(`groupsMetadata: ${JSON.stringify(groupsMetadata, null, 2)}`);
 
   var pendingInvites: PendingInvite[] = await readFileToJson(
     PENDING_INVITES_FILE,
   );
-  debug(`pendingInvites: ${pendingInvites}`);
+  debug(`pendingInvites: ${JSON.stringify(pendingInvites, null, 2)}`);
   console.log(`Pending invites found: ${pendingInvites.length}`);
 
   if (V2_FORMAT_FLAG) {
@@ -44,7 +45,7 @@ export async function processMemberships() {
     sourceGroups = [];
     try {
       sourceGroups = (await readFileToJson(MEMBERSHIP_FILE)).groups;
-      debug(`sourceGroups: ${sourceGroups}`);
+      debug(`sourceGroups: ${JSON.stringify(sourceGroups, null, 2)}`);
       utils.log(`\nGroups in input file: ${sourceGroups.length}\n`);
     } catch (err) {
       utils.log(`error processing source data: ${err.message}`);
@@ -55,7 +56,7 @@ export async function processMemberships() {
     var sourceMemberships: Membership[] = [];
     try {
       sourceMemberships = await readFileToJson(MEMBERSHIP_FILE);
-      debug(`sourceMemberships: ${sourceMemberships}`);
+      debug(`sourceMemberships: ${JSON.stringify(sourceMemberships, null, 2)}`);
       utils.log(
         `\nMembership records in input file: ${sourceMemberships.length}\n`,
       );
@@ -120,9 +121,9 @@ export async function processMemberships() {
         }
 
         utils.log(`Analyzing ${gmd.groupName} [${groupId}]`);
-        spinner.start()
+        spinner.start();
         await group.init();
-        spinner.stop()
+        spinner.stop();
         debug(`group: ${group}`);
 
         //remove any 'pending invites' that have since been accepted

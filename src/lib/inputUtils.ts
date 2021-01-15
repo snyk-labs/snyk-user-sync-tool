@@ -24,7 +24,7 @@ export async function backupUserMemberships() {
   );
   fs.copyFile(common.MEMBERSHIP_FILE, destination, (err) => {
     if (err) throw err;
-    debug(`\nmembership file backed up to ${destination}`);
+    debug(`membership file backed up to ${destination}`);
     return true;
   });
 }
@@ -44,17 +44,16 @@ export async function getUniqueOrgs(userMemberships: Membership[]) {
       });
     }
   }
-  debug('\nUnique Group-Orgs in input file');
+  debug('Unique Group-Orgs in input file');
   debug(result);
-  debug('\n');
   return result;
 }
 
 async function getPendingInvites(): Promise<PendingInvite[]> {
   let pendingInvites: PendingInvite[] = [];
-  utils.log(` - Checking status of pending invites... `);
+  utils.log(`Checking status of pending invites... `);
   if (fs.statSync(common.PENDING_INVITES_FILE)['size'] == 0) {
-    debug(' - None Found (0 byte file)');
+    debug('None Found (0 byte file)');
     return [];
   }
   try {
@@ -62,7 +61,7 @@ async function getPendingInvites(): Promise<PendingInvite[]> {
     debug(pendingInvites);
   } catch (err) {
     if (err instanceof SyntaxError) {
-      utils.log(' - Invalid JSON, skipping...');
+      utils.log('Invalid JSON, skipping...');
     } else {
       utils.log(err.name);
     }
@@ -74,13 +73,12 @@ export async function removeAcceptedPendingInvites(
   groupId: string,
   groupMembers: GroupMember[],
 ) {
-  debug(groupMembers);
   let result: PendingInvite[] = [];
 
   // get pendingInvites for this group
   let pendingInvites: PendingInvite[] = await getPendingInvites();
 
-  debug(pendingInvites);
+  debug(`pending invites: ${JSON.stringify(pendingInvites, null, 2)}`);
 
   if (pendingInvites.length > 0) {
     for (const pi of pendingInvites) {
@@ -105,8 +103,7 @@ export async function removeAcceptedPendingInvites(
         result.push(pi);
       }
     }
-    debug('writing to invite file: ');
-    debug(result);
+    debug(`writing ${result.length} invites to pending invite file`);
 
     if (!common.DRY_RUN_FLAG) {
       fs.writeFileSync(
@@ -121,7 +118,6 @@ export async function getUniqueGroups(userMemberships: Membership[]) {
   const result = [];
   const map = new Map();
   for (const um of userMemberships) {
-    debug(um.group);
     let group = um.group;
     if (!map.has(group)) {
       map.set(group, true); // set any value to Map
@@ -130,7 +126,7 @@ export async function getUniqueGroups(userMemberships: Membership[]) {
       });
     }
   }
-  debug(result);
+  debug(`unique groups found: ${JSON.stringify(result, null, 2)}`);
   return result;
 }
 
@@ -141,8 +137,8 @@ export function printKeys(snykKeys: string) {
 }
 
 export async function initializeDb() {
-  debug(`\nBASE_DIR: ${common.BASE_DIR}`);
-  debug('\nChecking for local DB files...');
+  debug(`BASE_DIR: ${common.BASE_DIR}`);
+  debug('Checking for local DB files...');
   if (!fs.existsSync(common.DB_DIR)) {
     //create DB_DIR
     debug(`db dir does not exist, creating ${common.DB_DIR} ...`);
@@ -175,7 +171,7 @@ export async function initializeDb() {
   } else {
     debug(`log dir ${common.LOG_DIR} already exists`);
   }
-  debug('Pruning logs and backup files if needed...');
+
   pruneDir(common.LOG_DIR);
   pruneDir(common.PREV_DIR);
 }

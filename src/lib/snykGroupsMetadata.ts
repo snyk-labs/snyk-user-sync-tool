@@ -38,7 +38,10 @@ export class snykGroupsMetadata {
         //debug(JSON.stringify(response.data, null,2));
         let filteredOrgs = response.data.orgs.filter(function(org: GroupOrg) {
           if (org.group != null) {
-            return org.group.name === groupName;
+            return (
+              org.group.name === groupName ||
+              `'${org.group.name}'` === groupName
+            );
           }
         });
         let org = filteredOrgs[0];
@@ -82,7 +85,6 @@ export class snykGroupsMetadata {
           };
         }
       }
-      debug(`pushing result: ${result}`);
       this._groupsMetadata.push(result);
     }
   }
