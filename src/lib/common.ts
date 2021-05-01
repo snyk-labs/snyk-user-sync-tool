@@ -11,6 +11,7 @@ export const VALID_ROLES_FILE = BASE_DIR.concat('conf/roles.json');
 export const LOG_LIMIT = 25;
 export var DRY_RUN_FLAG: boolean = false;
 export var ADD_NEW_FLAG: boolean = false;
+export var INVITE_TO_ALL_ORGS_FLAG: boolean = false;
 export var DELETE_MISSING_FLAG: boolean = false;
 export var V2_FORMAT_FLAG: boolean;
 export var API_KEYS: string;
@@ -20,6 +21,7 @@ export var API_BASE_URI: string;
 export function setEnvironment(
   dryRunFlag: boolean,
   addNewFlag: boolean,
+  inviteToAllOrgsFlag: boolean,
   deleteMissingFlag: boolean,
   v2FormatFlag: boolean,
   apiKeys: string,
@@ -28,6 +30,7 @@ export function setEnvironment(
 ) {
   DRY_RUN_FLAG = dryRunFlag;
   ADD_NEW_FLAG = addNewFlag;
+  INVITE_TO_ALL_ORGS_FLAG = inviteToAllOrgsFlag;
   DELETE_MISSING_FLAG = deleteMissingFlag;
   V2_FORMAT_FLAG = v2FormatFlag;
   API_KEYS = apiKeys;
