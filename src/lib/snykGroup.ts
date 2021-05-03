@@ -178,7 +178,10 @@ export class snykGroup {
     for (const sm of this._snykMembershipQueue) {
       try {
         await inputUtils.validateUserMembership(sm);
-        if ((await utils.isPendingInvite(sm.userEmail, this.id)) == false) {
+        if (
+          (await utils.isPendingInvite(sm.userEmail, this.id)) == false ||
+          common.INVITE_TO_ALL_ORGS_FLAG
+        ) {
           if ((await this.userExists(sm.userEmail)) == true) {
             //begin user exists in group flow
             const orgId = await this.getOrgIdFromName(sm.org);

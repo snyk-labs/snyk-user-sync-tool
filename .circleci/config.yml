@@ -8,13 +8,14 @@ jobs:
         steps:
             - checkout
             - run: sudo npm install nexe@next -g
+            - run: sudo npm install semantic-release @semantic-release/exec
             - run: npm install
             - run: npx tsc
+            - run: npm run test:unit
             - snyk/scan:
                 fail-on-issues: true
-                monitor-on-build: false
+                monitor-on-build: true
                 token-variable: SNYK_TOKEN
-            - run: npm run test:unit
             - run: 
                 name: Create release binaries
                 command: |
@@ -43,13 +44,14 @@ jobs:
               at: ./artifacts
           - attach_workspace:
               at: ./
-          - run:
-              name: "Publish Release on GitHub"
-              command: |
-                go get github.com/tcnksm/ghr
-                VERSION=$(cat ./VERSION)
-                echo "VERSION: ${VERSION}"
-                ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./artifacts/
+          - run: npx semantic-release
+          # - run:
+          #    name: "Publish Release on GitHub"
+          #    command: |
+          #      go get github.com/tcnksm/ghr
+          #      VERSION=$(cat ./VERSION)
+          #      echo "VERSION: ${VERSION}"
+          #      ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./artifacts/
     build-test:
         docker:
             - image: circleci/node:12

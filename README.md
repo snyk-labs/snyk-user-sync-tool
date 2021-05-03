@@ -35,20 +35,23 @@ Usage: snyk-user-sync-tool [OPTIONS]
                 SaaS is used.
 
 Options:
-  --version          Show version number                               [boolean]
-  --add-new          add memberships if they are found in the
-                     membership-file and are not in Snyk
-  --delete-missing   delete memberships from Snyk if they are found
-                     to be missing from the membership-file (use with caution)
-  --v2               use v2 file format
-  --membership-file  path to membership file
-                     if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE
-  --api-keys         list of api keys per group
-                     if not specified, taken from SNYK_IAM_API_KEYS
-  --dry-run          print/log the execution plan without making any updates to
-                     Snyk
-  --debug            enable debug mode                                 [boolean]
-  --help             Show help                                         [boolean]
+  --version             Show version number                            [boolean]
+  --add-new             add memberships if they are found in the
+                        membership-file and are not in Snyk
+  --delete-missing      delete memberships from Snyk if they are found
+                        to be missing from the membership-file (use with
+                        caution)
+  --v2                  use v2 file format
+  --membership-file     path to membership file
+                        if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE
+  --api-keys            list of api keys per group
+                        if not specified, taken from SNYK_IAM_API_KEYS
+  --dry-run             print/log the execution plan without making any updates
+                        to Snyk
+  --invite-to-all-orgs  send new users an invite to every org, rather than only
+                        the first
+  --debug               enable debug mode                              [boolean]
+  --help                Show help                                      [boolean]
 ```
 __Example__:
 ```
