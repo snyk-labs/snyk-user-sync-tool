@@ -8,6 +8,7 @@ import {
   PREV_DIR,
   PENDING_INVITES_FILE,
   DRY_RUN_FLAG,
+  INVITE_TO_ALL_ORGS_FLAG,
   V2_FORMAT_FLAG,
   setEnvironment,
   ADD_NEW_FLAG,
@@ -54,6 +55,10 @@ const argv = yargs
       describe: `print/log the execution plan without making any updates to Snyk`,
       demandOption: false,
     },
+    'invite-to-all-orgs': {
+      describe: `send new users an invite to every org, rather than only the first`,
+      demandOption: false,
+    },
     debug: {
       describe: `enable debug mode`,
       demandOption: false,
@@ -80,6 +85,9 @@ function checkEnvironment() {
     argv['delete-missing'] ? argv['delete-missing'] : false,
   );
   const dryRunFlag = Boolean(argv['dry-run'] ? argv['dry-run'] : false);
+  const inviteToAllOrgsFlag: boolean = Boolean(
+    argv['invite-to-all-orgs'] ? argv['invite-to-all-orgs'] : false,
+  );
   const v2FormatFlag: boolean = Boolean(argv['v2'] ? argv['v2'] : false);
 
   utils.log(`dry run: ${dryRunFlag}`);
@@ -90,6 +98,7 @@ function checkEnvironment() {
   }
   utils.log(`v2 format enabled?: ${v2FormatFlag}`);
   utils.log(`Delete Missing enabled?: ${deleteMissingFlag}`);
+  utils.log(`Invite to all orgs enabled?: ${inviteToAllOrgsFlag}`);
   debug('SNYK_IAM_API_KEYS: ');
   for (const key of snykKeys.split(',')) {
     debug(` ${key}`);
@@ -115,6 +124,7 @@ function checkEnvironment() {
   setEnvironment(
     dryRunFlag,
     addNewFlag,
+    inviteToAllOrgsFlag,
     deleteMissingFlag,
     v2FormatFlag,
     snykKeys,
