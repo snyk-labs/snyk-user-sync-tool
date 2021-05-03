@@ -8,7 +8,7 @@ jobs:
         steps:
             - checkout
             - run: sudo npm install nexe@next -g
-            - run: sudo npm install semantic-release @semantic-release/exec
+            - run: sudo npm install semantic-release @semantic-release/exec --save-dev
             - run: npm install
             - run: npx tsc
             - run: npm run test:unit
