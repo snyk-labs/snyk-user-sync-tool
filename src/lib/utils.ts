@@ -28,7 +28,8 @@ export async function recordPendingInvite(
   email: string,
 ) {
   let result = [];
-  const pendingInvitesFile: string = 'db/pending_invites.json';
+  //const pendingInvitesFile: string = 'db/pending_invites.json';
+  const pendingInvitesFile: string = common.PENDING_INVITES_FILE;
   let pendingInvites = await inputUtils.readFileToJson(pendingInvitesFile);
   debug(`pendingInvites length: ${pendingInvites.length}`);
 

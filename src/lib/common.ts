@@ -3,9 +3,11 @@ export const BASE_DIR = __dirname.replace(
   /(\/|\\)(dist$|dist(\/|\\).*|src\/lib$)/,
   '/',
 );
-export const DB_DIR = BASE_DIR.concat('db');
-export const PREV_DIR = BASE_DIR.concat('prev/');
-export const LOG_DIR = BASE_DIR.concat('log/');
+//export const DB_DIR = BASE_DIR.concat('db');
+export const DB_DIR = 'db';
+//export const PREV_DIR = BASE_DIR.concat('prev/');
+export const PREV_DIR = 'prev/';
+export const LOG_DIR = 'log/';
 export const PENDING_INVITES_FILE = DB_DIR.concat('/pending_invites.json');
 export const VALID_ROLES_FILE = BASE_DIR.concat('conf/roles.json');
 export const LOG_LIMIT = 25;

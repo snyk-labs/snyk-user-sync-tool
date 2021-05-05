@@ -1,6 +1,6 @@
 {
   "name": "snyk-user-sync-tool",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "sync snyk org users from an external source",
   "main": "dist/index.js",
   "scripts": {
