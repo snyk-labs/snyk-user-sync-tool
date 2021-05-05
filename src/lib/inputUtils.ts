@@ -223,8 +223,16 @@ export async function validateUserMembership(snykMembership: {
   org: string;
 }) {
   var reEmail: RegExp = /\S+@\S+\.\S+/;
-  let validRoles: string[] = await readFileToJson(common.VALID_ROLES_FILE);
-
+  // default valid roles
+  let validRoles: string[] = [
+    'admin',
+    'collaborator',
+    'restrictedCollaborator',
+  ];
+  //override default valid roles when conf/roles.json is present
+  if (fs.existsSync(common.VALID_ROLES_FILE)) {
+    let validRoles: string[] = await readFileToJson(common.VALID_ROLES_FILE);
+  }
   if (
     !(
       validRoles
