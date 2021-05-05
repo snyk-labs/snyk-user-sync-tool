@@ -24,6 +24,8 @@ This tool is designed to be flexible to to use for:
 
 ### Usage
 Grab a [release binary](https://github.com/snyk-tech-services/snyk-user-sync-tool/releases)
+or
+`npm install -g snyk-user-sync-tool`
 ```
 Usage: snyk-user-sync-tool [OPTIONS]
                 If no arguments are specified, values will be picked up from
