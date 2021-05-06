@@ -35,7 +35,7 @@
   ],
   "homepage": "https://github.com/snyk-tech-services/snyk-user-sync-tool#readme",
   "dependencies": {
-    "debug": "^4.1.1",
+    "debug": "^4.3.2",
     "ora": "^5.2.0",
     "p-map": "4.0.0",
     "snyk-request-manager": "^1.4.1",
