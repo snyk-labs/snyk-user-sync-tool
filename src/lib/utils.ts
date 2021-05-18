@@ -16,6 +16,7 @@ import * as common from './common';
 import * as utils from './utils';
 import * as customErrors from './customErrors';
 import { umask } from 'process';
+const readline = require('readline');
 
 const debug = debugLib('snyk:utils');
 const { execSync } = require('child_process');
@@ -92,6 +93,6 @@ export function log(message: string) {
 }
 
 export function printProgress(progress: string) {
-  process.stdout.cursorTo(0);
+  readline.cursorTo(process.stdout, 0)
   process.stdout.write(`${progress}`);
 }
