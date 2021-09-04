@@ -93,6 +93,6 @@ export function log(message: string) {
 }
 
 export function printProgress(progress: string) {
-  readline.cursorTo(process.stdout, 0)
+  readline.cursorTo(process.stdout, 0);
   process.stdout.write(`${progress}`);
 }

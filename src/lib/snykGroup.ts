@@ -140,6 +140,21 @@ export class snykGroup {
       `Org ID not found for Org Name "${orgName}" - check the name is correct`,
     );
   }
+  async getOrgIdFromSlug(orgSlug: string) {
+    //let result = '';
+    const groupOrgs = await this.getOrgs();
+    for (const o of groupOrgs) {
+      debug(`Comparing ${o.slug} to ${orgSlug}...`);
+      if (o.slug == orgSlug) {
+        debug(`returning ${o.id}`);
+        return o.id;
+      }
+    }
+    //return result;
+    throw new customErrors.OrgIdNotFound(
+      `Org ID not found for Org Slug "${orgSlug}" - check the slug is correct`,
+    );
+  }
   async getUserIdFromEmail(userEmail: string) {
     for (const gm of this._members) {
       if (gm.email != null) {
@@ -376,7 +391,7 @@ export class snykGroup {
       for (const v2Org of sourceMemberships.orgs) {
         if (v2Org.collaborators) {
           for (const collaborator of v2Org.collaborators) {
-            var res = this.do_findOrgUserRolesInSnyk(
+            var res = await this.do_findOrgUserRolesInSnyk(
               collaborator.email,
               'collaborator',
               v2Org.orgName,
@@ -394,7 +409,7 @@ export class snykGroup {
         }
         if (v2Org.admins) {
           for (const admin of v2Org.admins) {
-            var res = this.do_findOrgUserRolesInSnyk(
+            var res = await this.do_findOrgUserRolesInSnyk(
               admin.email,
               'admin',
               v2Org.orgName,
@@ -548,7 +563,7 @@ export class snykGroup {
     debug(`result: ${result}`);
     return result;
   }
-  private do_findOrgUserRolesInSnyk(
+  private async do_findOrgUserRolesInSnyk(
     userEmail: string,
     userRole: string,
     userOrg: string,
@@ -556,13 +571,30 @@ export class snykGroup {
     let roleMatch: boolean = false;
     let orgMatch: boolean = false;
     for (const gm of this._members) {
+      debug(`userEmail: ${userEmail}`);
+      debug(`gm.groupRole: ${gm.groupRole}`);
+      debug(`gm.email: ${gm.email}`);
       if (!roleMatch && gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
+        debug('comparing userEmail to gm.email...');
         if (gm.email.toUpperCase() == userEmail.toUpperCase()) {
+          debug('userEmail matches gm.email');
           for (const org of gm.orgs) {
-            if (org.name == userOrg) {
+            debug(`userOrg: ${userOrg}`);
+            debug(`org.name: ${org.name}`);
+            debug(
+              `comparing ${await this.getOrgIdFromName(
+                userOrg,
+              )} to ${await this.getOrgIdFromSlug(org.name)}...`,
+            );
+            if (
+              (await this.getOrgIdFromSlug(org.name)) ==
+              (await this.getOrgIdFromName(userOrg))
+            ) {
               orgMatch = true;
+              debug(`set orgMatch: ${orgMatch}`);
               if (org.role.toUpperCase() == userRole.toUpperCase()) {
                 roleMatch = true;
+                debug(`set roleMatch: ${roleMatch}`);
                 break;
               }
             }
