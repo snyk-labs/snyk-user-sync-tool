@@ -129,9 +129,9 @@ export class snykGroup {
     //let result = '';
     const groupOrgs = await this.getOrgs();
     for (const o of groupOrgs) {
-      debug(`Comparing ${o.name} to ${orgName}...`);
+      //debug(`Comparing name ${o.name} to ${orgName}...`);
       if (o.name == orgName) {
-        debug(`returning ${o.id}`);
+        //debug(`returning ${o.id}`);
         return o.id;
       }
     }
@@ -144,9 +144,9 @@ export class snykGroup {
     //let result = '';
     const groupOrgs = await this.getOrgs();
     for (const o of groupOrgs) {
-      debug(`Comparing ${o.slug} to ${orgSlug}...`);
+      //debug(`Comparing slug ${o.slug} to ${orgSlug}...`);
       if (o.slug == orgSlug) {
-        debug(`returning ${o.id}`);
+        //debug(`returning ${o.id}`);
         return o.id;
       }
     }
@@ -201,7 +201,7 @@ export class snykGroup {
             //begin user exists in group flow
             const orgId = await this.getOrgIdFromName(sm.org);
             const userId = await this.getUserIdFromEmail(sm.userEmail);
-            debug('userExistsInOrg: ' + sm.userExistsInOrg);
+            debug(sm.userEmail + ' in ' + sm.org + ' userExistsInOrg: ' + sm.userExistsInOrg);
             if (sm.userExistsInOrg == 'true') {
               //user already in org, so just update existing record
               debug('Updating existing group-org member role');
@@ -360,10 +360,17 @@ export class snykGroup {
         if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
           if (gm.email.toUpperCase() == um.userEmail.toUpperCase()) {
             for (const org of gm.orgs) {
-              if (org.name == um.org) {
+              let orgIdFromName: string = await this.getOrgIdFromName(um.org)
+              let orgIdFromSlug: string = await this.getOrgIdFromSlug(org.name)
+
+              debug(`comparing ${orgIdFromName} to ${orgIdFromSlug}...`,);
+
+              if (orgIdFromName == orgIdFromSlug) {
                 orgMatch = true;
+                debug(`orgMatch: ${orgMatch}`)
                 if (org.role.toUpperCase() == um.role.toUpperCase()) {
                   roleMatch = true;
+                  debug(`roleMatch: ${roleMatch}`)
                   break;
                 }
               }
@@ -448,7 +455,16 @@ export class snykGroup {
           let roleMatch: boolean = false;
           for (const um of (this.sourceMemberships as v1Group).members) {
             if (um.userEmail.toUpperCase() == gm.email.toUpperCase()) {
-              if (um.org == org.name) {
+              debug(`um.org: ${um.org}`);
+              debug(`org.name: ${org.name}`);
+  
+              let orgIdFromName: string = await this.getOrgIdFromName(um.org)
+              let orgIdFromSlug: string = await this.getOrgIdFromSlug(org.name)
+  
+              debug(
+                `comparing orgId from source ${orgIdFromName} to orgId from snyk ${orgIdFromSlug}...`,
+              );
+              if (orgIdFromName == orgIdFromSlug) {
                 if (um.role.toUpperCase() == org.role.toUpperCase()) {
                   roleMatch = true;
                   break;
@@ -483,11 +499,17 @@ export class snykGroup {
           if (!roleMatch) {
             if (sourceMemberships.orgs) {
               for (const v2Org of sourceMemberships.orgs) {
+                debug(`v2Org.orgName: ${v2Org.orgName}`);
+                debug(`org.name: ${org.name}`);
+  
+                let orgIdFromName: string = await this.getOrgIdFromName(v2Org.orgName)
+                let orgIdFromSlug: string = await this.getOrgIdFromSlug(org.name)
+  
                 debug(
-                  `checking snyk org ${org.name} against input org ${v2Org.orgName}`,
+                  `comparing orgId from source ${orgIdFromName} to orgId from snyk ${orgIdFromSlug}...`,
                 );
                 // handle case where org name is not found in put, what should happen?
-                if (org.name === v2Org.orgName) {
+                if (orgIdFromName === orgIdFromSlug) {
                   orgMatch = true;
                   debug('found matching org');
                   if (org.role === 'collaborator') {
@@ -581,15 +603,14 @@ export class snykGroup {
           for (const org of gm.orgs) {
             debug(`userOrg: ${userOrg}`);
             debug(`org.name: ${org.name}`);
+
+            let orgIdFromName: string = await this.getOrgIdFromName(userOrg)
+            let orgIdFromSlug: string = await this.getOrgIdFromSlug(org.name)
+
             debug(
-              `comparing ${await this.getOrgIdFromName(
-                userOrg,
-              )} to ${await this.getOrgIdFromSlug(org.name)}...`,
+              `comparing ${orgIdFromName} to ${orgIdFromSlug}...`,
             );
-            if (
-              (await this.getOrgIdFromSlug(org.name)) ==
-              (await this.getOrgIdFromName(userOrg))
-            ) {
+            if (orgIdFromName == orgIdFromSlug) {
               orgMatch = true;
               debug(`set orgMatch: ${orgMatch}`);
               if (org.role.toUpperCase() == userRole.toUpperCase()) {
