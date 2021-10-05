@@ -56,7 +56,7 @@ export class snykGroup {
       debug(JSON.stringify(response.data, null, 2));
       this._members = response.data;
       this._members = this._members.filter((x) => x.email != null);
-    } catch (err) {
+    } catch (err: any) {
       utils.log(err);
     }
 
@@ -66,7 +66,7 @@ export class snykGroup {
         url: `/orgs`,
       });
       this._orgs = response.data.orgs;
-    } catch (err) {
+    } catch (err: any) {
       utils.log(err);
     }
   }
@@ -111,7 +111,7 @@ export class snykGroup {
         url: `/org/${org}/invite`,
         body: inviteBody,
       });
-    } catch (err) {
+    } catch (err: any) {
       utils.log(err);
     }
   }
@@ -255,7 +255,7 @@ export class snykGroup {
         } else {
           utils.log(` - skipping ${sm.userEmail}, invite already pending...`);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.log(err);
       }
     }

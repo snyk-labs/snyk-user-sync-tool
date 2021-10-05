@@ -47,7 +47,7 @@ export async function processMemberships() {
       sourceGroups = (await readFileToJson(MEMBERSHIP_FILE)).groups;
       debug(`sourceGroups: ${JSON.stringify(sourceGroups, null, 2)}`);
       utils.log(`\nGroups in input file: ${sourceGroups.length}\n`);
-    } catch (err) {
+    } catch (err: any) {
       utils.log(`error processing source data: ${err.message}`);
       process.exit(1);
     }
@@ -63,7 +63,7 @@ export async function processMemberships() {
 
       var uniqueOrgs = await getUniqueOrgs(sourceMemberships);
       sourceGroups = await getUniqueGroups(sourceMemberships);
-    } catch (err) {
+    } catch (err: any) {
       utils.log(`unable to process source data, check format`);
       process.exit(1);
     }
@@ -138,7 +138,7 @@ export async function processMemberships() {
           // remove any memberships from snyk that are missing in the input file
           await group.removeStaleMemberships();
         }
-      } catch (err) {
+      } catch (err: any) {
         throw err;
         if (err.name == 'TypeError') {
           utils.log(`unable to process source data, check format`);
