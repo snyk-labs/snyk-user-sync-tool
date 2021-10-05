@@ -59,7 +59,7 @@ async function getPendingInvites(): Promise<PendingInvite[]> {
   try {
     pendingInvites = await readFileToJson(common.PENDING_INVITES_FILE);
     debug(pendingInvites);
-  } catch (err) {
+  } catch (err: any) {
     if (err instanceof SyntaxError) {
       utils.log('Invalid JSON, skipping...');
     } else {
@@ -201,13 +201,13 @@ export async function readFileToJson(filePath: string) {
     if (data.length > 0) {
       try {
         return JSON.parse(data);
-      } catch (err) {
+      } catch (err: any) {
         utils.log(`Error parsing file ${filePath}`);
         utils.log(`  - ${err.message}`);
         throw err;
       }
     } else return [];
-  } catch (err) {
+  } catch (err: any) {
     if (err.code === 'ENOENT') {
       utils.log(`file ${filePath} not found, exiting...`);
       process.exit(1);

@@ -52,7 +52,7 @@ export class snykGroupsMetadata {
           groupKey: groupKey,
           groupStatus: 'enabled',
         };
-      } catch (err) {
+      } catch (err: any) {
         if (err.name == 'RequestsManagerApiAuthenticationError') {
           debug('we are handling api auth 401');
           result = {
