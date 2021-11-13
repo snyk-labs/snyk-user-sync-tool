@@ -1,0 +1,73 @@
+{
+  "prepare": [
+    "@semantic-release/npm",
+    {
+      "//": "adds a file to identify a build as a standalone binary",
+      "path": "@semantic-release/exec",
+      "cmd": "echo '' > dist/STANDALONE"
+    },
+    {
+      "//": "build the macos",
+      "path": "@semantic-release/exec",
+      "cmd": "npx nexe@next dist/index.js -t mac-x64-10.21.0 -o snyk-user-sync-tool-macos"
+    },
+    {
+      "//": "build the linux",
+      "path": "@semantic-release/exec",
+      "cmd": "npx nexe@next dist/index.js -t linux-x64-12.16.2 -o snyk-user-sync-tool-linux"
+    },
+    {
+      "//": "build the windows binaries",
+      "path": "@semantic-release/exec",
+      "cmd": "npx nexe@next dist/index.js -t windows-x64-10.16.0 -o snyk-user-sync-tool-win.exe"
+    },
+    {
+      "//": "shasum all binaries",
+      "path": "@semantic-release/exec",
+      "cmd": "shasum -a 256 snyk-user-sync-tool-linux > snyk-user-sync-tool-linux.sha256 && shasum -a 256 snyk-user-sync-tool-macos > snyk-user-sync-tool-macos.sha256 && shasum -a 256 snyk-user-sync-tool-win.exe > snyk-user-sync-tool-win.exe.sha256"
+    },
+    {
+      "//": "removes the file we use to identify a build as a standalone binary",
+      "path": "@semantic-release/exec",
+      "cmd": "rm dist/STANDALONE"
+    }
+  ],
+  "publish": [
+    "@semantic-release/npm",
+    {
+      "path": "@semantic-release/github",
+      "assets": [
+        {
+          "path": "./snyk-user-sync-tool-linux",
+          "name": "snyk-user-sync-tool-linux",
+          "label": "snyk-user-sync-tool-linux"
+        },
+        {
+          "path": "./snyk-user-sync-tool-linux.sha256",
+          "name": "snyk-user-sync-tool-linux.sha256",
+          "label": "snyk-user-sync-tool-linux.sha256"
+        },
+        {
+          "path": "./snyk-user-sync-tool-macos",
+          "name": "snyk-user-sync-tool-macos",
+          "label": "snyk-user-sync-tool-macos"
+        },
+        {
+          "path": "./snyk-user-sync-tool-macos.sha256",
+          "name": "snyk-user-sync-tool-macos.sha256",
+          "label": "snyk-user-sync-tool-macos.sha256"
+        },
+        {
+          "path": "./snyk-user-sync-tool-win.exe",
+          "name": "snyk-user-sync-tool-win.exe",
+          "label": "snyk-user-sync-tool-win.exe"
+        },
+        {
+          "path": "./snyk-user-sync-tool-win.exe.sha256",
+          "name": "snyk-user-sync-tool-win.exe.sha256",
+          "label": "snyk-user-sync-tool-win.exe.sha256"
+        }
+      ]
+    }
+  ],
+  "branches": ["master"]
