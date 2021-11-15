@@ -7,7 +7,6 @@ jobs:
             - image: circleci/node:12
         steps:
             - checkout
-            - run: sudo npm install nexe@next -g
             - run: sudo npm install semantic-release @semantic-release/exec --save-dev
             - run: npm install
             - run: npx tsc
@@ -17,42 +16,6 @@ jobs:
                 monitor-on-build: true
                 token-variable: SNYK_TOKEN
             - run: npx semantic-release
-            #- run: 
-            #    name: Create release binaries
-            #    command: |
-            #      nexe dist/index.js -t windows-x64-10.16.0 -o ./artifacts/snyk-user-sync-tool-win.exe
-            #      nexe dist/index.js -t mac-x64-10.21.0 -o ./artifacts/snyk-user-sync-tool-macos
-            #      nexe dist/index.js -t linux-x86-12.16.2 -o ./artifacts/snyk-user-sync-tool-linux-x86
-            #      nexe dist/index.js -t linux-x64-12.16.2 -o ./artifacts/snyk-user-sync-tool-linux-x64
-            #      sha256sum ./artifacts/snyk-user-sync-tool-win.exe > ./artifacts/snyk-user-sync-tool-win.exe.sha256
-            #      sha256sum ./artifacts/snyk-user-sync-tool-macos > ./artifacts/snyk-user-sync-tool-macos.sha256
-            #      sha256sum ./artifacts/snyk-user-sync-tool-linux-x86 > ./artifacts/snyk-user-sync-tool-linux-x86.sha256
-            #      sha256sum ./artifacts/snyk-user-sync-tool-linux-x64 > ./artifacts/snyk-user-sync-tool-linux-x64.sha256
-            #      cat package.json | grep version | cut -f2 -d\: | sed 's/"//g' | sed 's/\,//' > ./VERSION
-            #- persist_to_workspace:
-            #    root: ./artifacts
-            #    paths:
-            #      - ./*
-            #- persist_to_workspace:
-            #    root: ./
-            #    paths:
-            #      - VERSION
-    #publish-github-release:
-    #    docker:
-    #      - image: circleci/golang:latest
-    #    steps:
-    #      - attach_workspace:
-    #          at: ./artifacts
-    #      - attach_workspace:
-    #          at: ./
-    #      - run: npx semantic-release
-          # - run:
-          #    name: "Publish Release on GitHub"
-          #    command: |
-          #      go get github.com/tcnksm/ghr
-          #      VERSION=$(cat ./VERSION)
-          #      echo "VERSION: ${VERSION}"
-          #      ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} ./artifacts/
     build-test:
         docker:
             - image: circleci/node:12
