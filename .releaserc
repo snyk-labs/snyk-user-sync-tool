@@ -12,9 +12,14 @@
       "cmd": "npx nexe@next dist/index.js -t mac-x64-10.21.0 -o snyk-user-sync-tool-macos"
     },
     {
-      "//": "build the linux",
+      "//": "build the linux x64",
       "path": "@semantic-release/exec",
-      "cmd": "npx nexe@next dist/index.js -t linux-x64-12.16.2 -o snyk-user-sync-tool-linux"
+      "cmd": "npx nexe@next dist/index.js -t linux-x64-12.16.2 -o snyk-user-sync-tool-linux-x64"
+    },
+    {
+      "//": "build the linux x86",
+      "path": "@semantic-release/exec",
+      "cmd": "npx nexe@next dist/index.js -t linux-x86-12.16.2 -o snyk-user-sync-tool-linux-x86"
     },
     {
       "//": "build the windows binaries",
@@ -24,7 +29,7 @@
     {
       "//": "shasum all binaries",
       "path": "@semantic-release/exec",
-      "cmd": "shasum -a 256 snyk-user-sync-tool-linux > snyk-user-sync-tool-linux.sha256 && shasum -a 256 snyk-user-sync-tool-macos > snyk-user-sync-tool-macos.sha256 && shasum -a 256 snyk-user-sync-tool-win.exe > snyk-user-sync-tool-win.exe.sha256"
+      "cmd": "shasum -a 256 snyk-user-sync-tool-linux-x64 > snyk-user-sync-tool-linux-x64.sha256 && shasum -a 256 snyk-user-sync-tool-linux-x86 > snyk-user-sync-tool-linux-x86.sha256 && shasum -a 256 snyk-user-sync-tool-macos > snyk-user-sync-tool-macos.sha256 && shasum -a 256 snyk-user-sync-tool-win.exe > snyk-user-sync-tool-win.exe.sha256"
     },
     {
       "//": "removes the file we use to identify a build as a standalone binary",
@@ -38,14 +43,24 @@
       "path": "@semantic-release/github",
       "assets": [
         {
-          "path": "./snyk-user-sync-tool-linux",
-          "name": "snyk-user-sync-tool-linux",
-          "label": "snyk-user-sync-tool-linux"
+          "path": "./snyk-user-sync-tool-linux-x64",
+          "name": "snyk-user-sync-tool-linux-x64",
+          "label": "snyk-user-sync-tool-linux-x64"
         },
         {
-          "path": "./snyk-user-sync-tool-linux.sha256",
-          "name": "snyk-user-sync-tool-linux.sha256",
-          "label": "snyk-user-sync-tool-linux.sha256"
+          "path": "./snyk-user-sync-tool-linux-x64.sha256",
+          "name": "snyk-user-sync-tool-linux-x64.sha256",
+          "label": "snyk-user-sync-tool-linux-x64.sha256"
+        },
+        {
+          "path": "./snyk-user-sync-tool-linux-x86",
+          "name": "snyk-user-sync-tool-linux-x86",
+          "label": "snyk-user-sync-tool-linux-x86"
+        },
+        {
+          "path": "./snyk-user-sync-tool-linux-x86.sha256",
+          "name": "snyk-user-sync-tool-linux-x86.sha256",
+          "label": "snyk-user-sync-tool-linux-x86.sha256"
         },
         {
           "path": "./snyk-user-sync-tool-macos",
@@ -71,3 +86,4 @@
     }
   ],
   "branches": ["master"]
+}
