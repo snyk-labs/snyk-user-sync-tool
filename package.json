@@ -65,10 +65,5 @@
   },
   "bin": {
     "snyk-user-sync-tool": "./dist/index.js"
-  },
-  "release": {
-    "branches": [
-      "master"
-    ]
   }
 }
