@@ -4,7 +4,7 @@ orbs:
 jobs:
     build-test-publish:
         docker:
-            - image: circleci/node:12
+            - image: circleci/node:14
         steps:
             - checkout
             - run: sudo npm install semantic-release @semantic-release/exec --save-dev
@@ -18,7 +18,7 @@ jobs:
             - run: npx semantic-release
     build-test:
         docker:
-            - image: circleci/node:12
+            - image: circleci/node:14
         steps:
             - checkout
             - run: npm install
@@ -30,7 +30,7 @@ jobs:
             - run: npm run test:unit
     build-test-from-fork:
         docker:
-            - image: circleci/node:12
+            - image: circleci/node:14
         steps:
             - checkout
             - run: npm install
