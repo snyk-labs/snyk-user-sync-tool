@@ -9,7 +9,7 @@
     {
       "//": "build the macos",
       "path": "@semantic-release/exec",
-      "cmd": "npx nexe@next dist/index.js -t mac-x64-10.21.0 -o snyk-user-sync-tool-macos"
+      "cmd": "npx nexe@next dist/index.js -t mac-x64-12.16.2 -o snyk-user-sync-tool-macos"
     },
     {
       "//": "build the linux x64",
@@ -24,7 +24,7 @@
     {
       "//": "build the windows binaries",
       "path": "@semantic-release/exec",
-      "cmd": "npx nexe@next dist/index.js -t windows-x64-10.16.0 -o snyk-user-sync-tool-win.exe"
+      "cmd": "npx nexe@next dist/index.js -t windows-x64-12.16.2 -o snyk-user-sync-tool-win.exe"
     },
     {
       "//": "shasum all binaries",
