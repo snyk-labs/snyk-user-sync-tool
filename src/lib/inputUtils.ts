@@ -230,8 +230,9 @@ export async function validateUserMembership(snykMembership: {
     'restrictedCollaborator',
   ];
   //override default valid roles when conf/roles.json is present
+  console.log(fs.existsSync(common.VALID_ROLES_FILE))
   if (fs.existsSync(common.VALID_ROLES_FILE)) {
-    let validRoles: string[] = await readFileToJson(common.VALID_ROLES_FILE);
+    validRoles = await readFileToJson(common.VALID_ROLES_FILE);
   }
   if (
     !(
