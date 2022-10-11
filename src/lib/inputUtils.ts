@@ -221,28 +221,10 @@ export async function validateUserMembership(snykMembership: {
   userEmail: string;
   role: string;
   org: string;
-}) {
+}, validRoles: any[]) {
   var reEmail: RegExp = /\S+@\S+\.\S+/;
-  // default valid roles
-  let validRoles: string[] = [
-    'admin',
-    'collaborator',
-    'restrictedCollaborator',
-  ];
-  //override default valid roles when conf/roles.json is present
-  console.log(fs.existsSync(common.VALID_ROLES_FILE))
-  if (fs.existsSync(common.VALID_ROLES_FILE)) {
-    validRoles = await readFileToJson(common.VALID_ROLES_FILE);
-  }
-  if (
-    !(
-      validRoles
-        .map((x) => {
-          return x.toUpperCase();
-        })
-        .indexOf(snykMembership.role.toUpperCase()) >= 0
-    )
-  ) {
+  //if roles passed is not in groups valid roles then throw error
+  if (!(validRoles.includes(snykMembership.role.toUpperCase()))){
     throw new customErrors.InvalidRole(
       `Invalid value for role. Acceptable values are one of [${validRoles}]`,
     );

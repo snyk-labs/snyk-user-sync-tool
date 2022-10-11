@@ -81,12 +81,17 @@ export class snykGroup {
       //map roles to role id
       response.data.map( (currRole: any) => this._roles[currRole["name"].toUpperCase()] = currRole["publicId"]);
       //if custom admin/collaborator role does not exist then translate org admin/collaborator role into that
-      !("ADMIN" in this._roles) ? this._roles["ORG ADMIN"] = this._roles["ADMIN"] : "";
-      !("COLLABORATOR" in this._roles) ? this._roles["COLLABORATOR"] = this._roles["COLLABORATOR"] : "";
+      if(!("ADMIN" in this._roles)){
+        this._roles["ADMIN"] = this._roles["ORG ADMIN"]
+        delete this._roles["ORG ADMIN"]
+      }
+      if(!("COLLABORATOR" in this._roles)){
+        this._roles["ADMIN"] = this._roles["ORG COLLABORATOR"]
+        delete this._roles["ORG COLLABORATOR"]
+      }
     } catch (err:any){
       utils.log(err)
     }
-    console.log(this._roles)
   }
   async getMembers() {
     return this._members;
@@ -196,7 +201,7 @@ export class snykGroup {
 
     for (const sm of this._snykMembershipQueue) {
       try {
-        await inputUtils.validateUserMembership(sm);
+        await inputUtils.validateUserMembership(sm, Object.keys(this._roles));
         if (
           (await utils.isPendingInvite(sm.userEmail, this.id)) == false ||
           common.INVITE_TO_ALL_ORGS_FLAG
@@ -211,21 +216,20 @@ export class snykGroup {
               debug('Updating existing group-org member role');
               //change role -- update member of org
               let updateBody = `{
-                "role": "${sm.role}"
+                "rolePublicId": "${this._roles[sm.role.toUpperCase()]}"
               }`;
 
               debug(`updateBody: ${updateBody}`);
-
               userMembershipQueue.push({
                 verb: 'PUT',
-                url: `/org/${orgId}/members/${userId}`,
+                url: `/org/${orgId}/members/update/${userId}`,
                 body: updateBody,
               });
             } else {
               // user not in org, add them
               let updateBody = `{
                 "userId": "${userId}",
-                "role": "${sm.role}"
+                "role": "collaborator"
               }`;
 
               userMembershipQueue.push({
@@ -233,6 +237,16 @@ export class snykGroup {
                 url: `/group/${this.id}/org/${orgId}/members`,
                 body: updateBody,
               });
+              //assign user to custom role after adding them to org
+              updateBody = `{
+                "rolePublicId": "${this._roles[sm.role.toUpperCase()]}"
+              }`;
+
+              userMembershipQueue.push({
+                verb: 'PUT',
+                url: `/org/${orgId}/members/update/${userId}`,
+                body: updateBody,
+              })              
             }
           } else {
             //user not in group, send invite
