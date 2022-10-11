@@ -19,6 +19,8 @@ export var V2_FORMAT_FLAG: boolean;
 export var API_KEYS: string;
 export var MEMBERSHIP_FILE: string;
 export var API_BASE_URI: string;
+export var AUTO_PROVISION_FLAG: boolean = false;
+
 
 export function setEnvironment(
   dryRunFlag: boolean,
@@ -29,6 +31,7 @@ export function setEnvironment(
   apiKeys: string,
   membershipFile: string,
   apiBaseUri: string,
+  autoProvisionFlag: boolean
 ) {
   DRY_RUN_FLAG = dryRunFlag;
   ADD_NEW_FLAG = addNewFlag;
@@ -38,6 +41,7 @@ export function setEnvironment(
   API_KEYS = apiKeys;
   MEMBERSHIP_FILE = membershipFile;
   API_BASE_URI = apiBaseUri;
+  AUTO_PROVISION_FLAG = autoProvisionFlag;
 }
 
 var m = new Date();

@@ -11,14 +11,13 @@ import {
 import {
   readFileToJson,
   getUniqueGroups,
-  getUniqueOrgs,
-  removeAcceptedPendingInvites,
+  getUniqueOrgs
 } from './inputUtils';
 import { snykGroup } from './snykGroup';
 import { snykGroupsMetadata } from './snykGroupsMetadata';
 import * as debugLib from 'debug';
 import * as utils from './utils';
-import { Membership, v2Group, PendingInvite, v1Group } from './types';
+import { Membership, v2Group, v1Group } from './types';
 import * as ora from 'ora';
 
 const debug = debugLib('snyk:app');
@@ -32,12 +31,6 @@ export async function processMemberships() {
 
   await groupsMetadata.init();
   debug(`groupsMetadata: ${JSON.stringify(groupsMetadata, null, 2)}`);
-
-  var pendingInvites: PendingInvite[] = await readFileToJson(
-    PENDING_INVITES_FILE,
-  );
-  debug(`pendingInvites: ${JSON.stringify(pendingInvites, null, 2)}`);
-  console.log(`Pending invites found: ${pendingInvites.length}`);
 
   if (V2_FORMAT_FLAG) {
     //process v2 format
@@ -125,9 +118,6 @@ export async function processMemberships() {
         await group.init();
         spinner.stop();
         debug(`group: ${group}`);
-
-        //remove any 'pending invites' that have since been accepted
-        await removeAcceptedPendingInvites(groupId, await group.getMembers());
 
         if (ADD_NEW_FLAG) {
           // process any new memberships in the input file

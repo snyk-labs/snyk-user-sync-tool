@@ -13,6 +13,7 @@ import {
   setEnvironment,
   ADD_NEW_FLAG,
   DELETE_MISSING_FLAG,
+  AUTO_PROVISION_FLAG,
 } from './common';
 import { exit } from 'process';
 
@@ -59,6 +60,11 @@ const argv = yargs
       describe: `send new users an invite to every org, rather than only the first`,
       demandOption: false,
     },
+    'auto-provison': {
+      describe: `Automatically provision users that are new to the group to their respective orgs. 
+      This requires that your snyk token is from a non-service account that is signed in through SSO`,
+      demandOption: false,
+    },
     debug: {
       describe: `enable debug mode`,
       demandOption: false,
@@ -83,6 +89,9 @@ function checkEnvironment() {
   );
   const deleteMissingFlag: boolean = Boolean(
     argv['delete-missing'] ? argv['delete-missing'] : false,
+  );
+  const autoProvisionFlag: boolean = Boolean(
+    argv['auto-provision'] ? argv['auto-provision'] : false,
   );
   const dryRunFlag = Boolean(argv['dry-run'] ? argv['dry-run'] : false);
   const inviteToAllOrgsFlag: boolean = Boolean(
@@ -115,11 +124,10 @@ function checkEnvironment() {
     utils.log(`snykMembershipFile: ${snykMembershipFile}`);
     utils.log(`addNewFlag: ${addNewFlag}`);
     utils.log(`deleteMissingFlag: ${deleteMissingFlag}`);
+    utils.log(`autoProvision: ${autoProvisionFlag}`);
     yargs.showHelp();
     process.exit(1);
   }
-
-  utils.log(`\nPending invites file: ${PENDING_INVITES_FILE}`);
 
   setEnvironment(
     dryRunFlag,
@@ -130,6 +138,7 @@ function checkEnvironment() {
     snykKeys,
     snykMembershipFile,
     snykApiBaseUri,
+    autoProvisionFlag
   );
 }
 

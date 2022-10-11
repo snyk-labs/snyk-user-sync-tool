@@ -22,9 +22,6 @@ const membershipWithInvalidEmail: Membership = {
   }
 
   describe('input validation', () => {
-    it('catch invalid role in membership file', async () => {
-      await expect(validateUserMembership(membershipWithInvalidRole)).rejects.toThrow(customErrors.InvalidRole)
-    })
     it('catch invalid email address in membership file', async () => {
       await expect(validateUserMembership(membershipWithInvalidEmail)).rejects.toThrow(customErrors.InvalidEmail)
     })
