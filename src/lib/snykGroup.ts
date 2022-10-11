@@ -25,6 +25,7 @@ export class snykGroup {
   private _snykMembershipQueue: any[];
   private _snykMembershipRemovalQueue: any[];
   private _buffer: number = 250;
+  private _roles: any = {};
   private _requestManager: requestsManager;
 
   constructor(
@@ -44,6 +45,7 @@ export class snykGroup {
       snykToken: this.key,
       userAgentPrefix: 'snyk-user-sync-tool',
     });
+
   }
 
   async init() {
@@ -69,11 +71,28 @@ export class snykGroup {
     } catch (err: any) {
       utils.log(err);
     }
+
+    //get roles
+    try{
+      let response = await this._requestManager.request({
+        verb: 'GET',
+        url:`/group/${this.id}/roles`
+      });
+      //map roles to role id
+      response.data.map( (currRole: any) => this._roles[currRole["name"].toUpperCase()] = currRole["publicId"]);
+      //if custom admin/collaborator role does not exist then translate org admin/collaborator role into that
+      !("ADMIN" in this._roles) ? this._roles["ORG ADMIN"] = this._roles["ADMIN"] : "";
+      !("COLLABORATOR" in this._roles) ? this._roles["COLLABORATOR"] = this._roles["COLLABORATOR"] : "";
+    } catch (err:any){
+      utils.log(err)
+    }
+    console.log(this._roles)
   }
   async getMembers() {
     return this._members;
   }
   async getOrgs() {
+    console.log(this._roles)
     return this._orgs;
   }
   async userExists(searchEmail: string) {
