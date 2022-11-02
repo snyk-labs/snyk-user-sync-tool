@@ -25,7 +25,7 @@ export class snykGroup {
   private _snykMembershipQueue: any[];
   private _snykMembershipRemovalQueue: any[];
   private _buffer: number = 250;
-  private _roles: any = {};
+  private _roleMapping: any = {};
   private _requestManager: requestsManager;
 
   constructor(
@@ -79,15 +79,15 @@ export class snykGroup {
         url:`/group/${this.id}/roles`
       });
       //map roles to role id
-      response.data.map( (currRole: any) => this._roles[currRole["name"].toUpperCase()] = currRole["publicId"]);
+      response.data.map( (currRole: any) => this._roleMapping[currRole["name"].toUpperCase()] = currRole["publicId"]);
       //if custom admin/collaborator role does not exist then translate org admin/collaborator role into that
-      if(!("ADMIN" in this._roles)){
-        this._roles["ADMIN"] = this._roles["ORG ADMIN"]
-        delete this._roles["ORG ADMIN"]
+      if(!("ADMIN" in this._roleMapping)){
+        this._roleMapping["ADMIN"] = this._roleMapping["ORG ADMIN"]
+        delete this._roleMapping["ORG ADMIN"]
       }
-      if(!("COLLABORATOR" in this._roles)){
-        this._roles["ADMIN"] = this._roles["ORG COLLABORATOR"]
-        delete this._roles["ORG COLLABORATOR"]
+      if(!("COLLABORATOR" in this._roleMapping)){
+        this._roleMapping["ADMIN"] = this._roleMapping["ORG COLLABORATOR"]
+        delete this._roleMapping["ORG COLLABORATOR"]
       }
     } catch (err:any){
       utils.log(err)
@@ -97,8 +97,10 @@ export class snykGroup {
     return this._members;
   }
   async getOrgs() {
-    console.log(this._roles)
     return this._orgs;
+  }
+  async getRoles(){
+    return this._roleMapping
   }
   async userExists(searchEmail: string) {
     debug(`\nchecking if ${searchEmail} exists in group`);
@@ -128,7 +130,6 @@ export class snykGroup {
             }
             `;
     }
-
     try {
       return await this._requestManager.request({
         verb: 'POST',
@@ -188,6 +189,7 @@ export class snykGroup {
           const res = await this._requestManager.request(reqData);
           results.push(res);
         } catch (e) {
+          console.log(e)
           utils.log(`${e}`);
           debug(e);
         }
@@ -201,7 +203,7 @@ export class snykGroup {
 
     for (const sm of this._snykMembershipQueue) {
       try {
-        await inputUtils.validateUserMembership(sm, Object.keys(this._roles));
+        await this.validateUserMembership(sm);
         if (
           (await utils.isPendingInvite(sm.userEmail, this.id)) == false ||
           common.INVITE_TO_ALL_ORGS_FLAG
@@ -216,7 +218,7 @@ export class snykGroup {
               debug('Updating existing group-org member role');
               //change role -- update member of org
               let updateBody = `{
-                "rolePublicId": "${this._roles[sm.role.toUpperCase()]}"
+                "rolePublicId": "${this._roleMapping[sm.role.toUpperCase()]}"
               }`;
 
               debug(`updateBody: ${updateBody}`);
@@ -239,7 +241,7 @@ export class snykGroup {
               });
               //assign user to custom role after adding them to org
               updateBody = `{
-                "rolePublicId": "${this._roles[sm.role.toUpperCase()]}"
+                "rolePublicId": "${this._roleMapping[sm.role.toUpperCase()]}"
               }`;
 
               userMembershipQueue.push({
@@ -263,15 +265,17 @@ export class snykGroup {
               sm.role.toUpperCase() == 'ADMINISTRATOR'
             ) {
               inviteBody = `{
-                        "email": "${sm.userEmail}",
-                        "isAdmin": true
+                        "email" :"${sm.userEmail}",
+                        "role": "${this._roleMapping[sm.role.toUpperCase()]}"
                     }
                     `;
             }
             userMembershipQueue.push({
               verb: 'POST',
-              url: `/org/${orgId}/invite`,
+              url: `/orgs/${orgId}/invites?version=2022-09-15`,
               body: inviteBody,
+              useRESTApi: true
+
             });
             debug('recording pending invite:');
             debug(
@@ -607,5 +611,25 @@ export class snykGroup {
       roleMatch: roleMatch,
       orgMatch: orgMatch,
     };
+  }
+  private async validateUserMembership(snykMembership: {
+    userEmail: string;
+    role: string;
+    org: string;
+  }) {
+    var reEmail: RegExp = /\S+@\S+\.\S+/;
+    //if roles passed is not in groups valid roles then throw error
+    if (!(snykMembership.role.toUpperCase() in this._roleMapping)){
+      throw new customErrors.InvalidRole(
+        `Invalid value for role. Acceptable values are one of [${this._roleMapping}]`,
+      );
+    }
+    if (reEmail.test(snykMembership.userEmail) == false) {
+      //console.log('email regex = false')
+      throw new customErrors.InvalidEmail(
+        'Invalid email address format. Please verify',
+      );
+    }
+    return true;
   }
 }
