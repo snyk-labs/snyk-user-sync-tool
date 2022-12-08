@@ -84,18 +84,25 @@ export async function removeAcceptedPendingInvites(
     for (const pi of pendingInvites) {
       let found: boolean = false;
       for (const gm of groupMembers) {
-        if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
-          if (
-            groupId == pi.groupId &&
-            gm.email.toUpperCase() == pi.userEmail.toUpperCase()
-          ) {
-            found = true;
-            utils.log(
-              `found accepted invite for ${pi.userEmail} in ${pi.groupName}`,
-            );
-            break;
+          try{
+              if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
+                if (
+                  groupId == pi.groupId &&
+                  gm.email.toUpperCase() == pi.userEmail.toUpperCase()
+                ) {
+                  found = true;
+                  utils.log(
+                    `found accepted invite for ${pi.userEmail} in ${pi.groupName}`,
+                  );
+                  break;
+                }
+              }
+          } catch (err: any) {
+              utils.log(`  WARNING: ${err.message}`);
+              utils.log(`  group member: ${JSON.stringify(gm, null, 4)}`);
+              utils.log(`  pending invite: ${JSON.stringify(pi, null, 4)}`)
+              //process.exit(1);
           }
-        }
       }
       if (found == false) {
         debug('pushing invite to result:');
