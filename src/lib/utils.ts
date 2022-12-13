@@ -8,7 +8,6 @@ import {
   Membership,
   PendingMembership,
   GroupOrg,
-  v2Group,
 } from './types';
 import * as inputUtils from './inputUtils';
 import * as common from './common';
