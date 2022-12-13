@@ -1,8 +1,8 @@
 [
     {
       "userEmail": "oshprengeel@gmail.com",
-      "role": "admin",
-      "org": "logz demo",
+      "role": "org admin",
+      "org": "Broker Teset",
       "group": "Oleg Shprengel"
     }
 ]

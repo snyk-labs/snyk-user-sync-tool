@@ -8,7 +8,6 @@ import * as customErrors from './customErrors';
 import {
   GroupMember,
   GroupOrg,
-  v2Group,
   PendingProvision,
   v1Group,
   PendingMembership,
@@ -23,7 +22,7 @@ export class snykGroup {
   id: string;
   name: string;
   key: string;
-  sourceMemberships: v2Group | v1Group;
+  sourceMemberships: v1Group;
   private _members: GroupMember[] = [];
   private _orgs: GroupOrg[] = [];
   private _snykMembershipQueue: any[];
@@ -40,7 +39,7 @@ export class snykGroup {
     id: string,
     name: string,
     key: string,
-    sourceMemberships: v2Group | v1Group,
+    sourceMemberships:  v1Group,
   ) {
     this._customAdminRoleExists = false;
     this._customCollaboratorRoleExists = false;
@@ -179,8 +178,7 @@ export class snykGroup {
   private getUniqueOrgs(){
     let uniqueOrgs:any = []
 
-    //get unique orgs for v1 membership file
-    if(this.sourceIsV1()){
+    //get unique orgs
       let groupMembers:any = this.sourceMemberships
       groupMembers = groupMembers.members
 
@@ -190,16 +188,6 @@ export class snykGroup {
           uniqueOrgs.push(member.org)
         }
       })
-    }
-    //get unique orgs for v2 membership file
-    else{
-      let groupMembers:any = this.sourceMemberships
-      groupMembers.orgs.map((currOrg:any)=>{
-        if(!uniqueOrgs.includes(currOrg.orgName)){
-          uniqueOrgs.push(currOrg.orgName)
-        }
-      })
-    }
     return uniqueOrgs
   }
   
@@ -493,13 +481,7 @@ export class snykGroup {
   }
   private async getSnykMembershipsToAdd() {
     var result = [];
-
-    if (this.sourceIsV1()) {
       result = await this.do_getSnykMembershipsToAddV1();
-    } else {
-      result = await this.do_getSnykMembershipsToAddV2();
-    }
-
     return result;
   }
   private async do_getSnykMembershipsToAddV1() {
@@ -546,60 +528,10 @@ export class snykGroup {
     }
     return result;
   }
-  private async do_getSnykMembershipsToAddV2() {
-    var result: PendingMembership[] = [];
-    var sourceMemberships = this.sourceMemberships as v2Group;
-
-    if (sourceMemberships.orgs) {
-      for (const v2Org of sourceMemberships.orgs) {
-        if (v2Org.collaborators) {
-          for (const collaborator of v2Org.collaborators) {
-            var res = this.do_findOrgUserRolesInSnyk(
-              collaborator.email,
-              'collaborator',
-              v2Org.orgName,
-            );
-            if (!res.roleMatch) {
-              result.push({
-                userEmail: `${collaborator.email}`,
-                role: 'collaborator',
-                org: `${v2Org.orgName}`,
-                group: `${this.name}`,
-                userExistsInOrg: `${res.orgMatch}`,
-              });
-            }
-          }
-        }
-        if (v2Org.admins) {
-          for (const admin of v2Org.admins) {
-            var res = this.do_findOrgUserRolesInSnyk(
-              admin.email,
-              'admin',
-              v2Org.orgName,
-            );
-            if (!res.roleMatch) {
-              result.push({
-                userEmail: `${admin.email}`,
-                role: 'admin',
-                org: `${v2Org.orgName}`,
-                group: `${this.name}`,
-                userExistsInOrg: `${res.orgMatch}`,
-              });
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
   private async getSnykMembershipsToRemove() {
     let result = [];
 
-    if (this.sourceIsV1()) {
       result = await this.do_getSnykMembershipsToRemoveV1();
-    } else {
-      result = await this.do_getSnykMembershipsToRemoveV2();
-    }
 
     return result;
   }
@@ -633,99 +565,7 @@ export class snykGroup {
     debug(`result: ${result}`);
     return result;
   }
-  private async do_getSnykMembershipsToRemoveV2() {
-    let result = [];
-    let sourceMemberships = this.sourceMemberships as v2Group;
-    for (const gm of this._members) {
-      let roleMatch: boolean = false;
-      let orgMatch: boolean = false;
-      if (gm.groupRole != 'admin') {
-        for (const org of gm.orgs) {
-          debug(`check org ${org.name} for user ${gm.email}`);
-
-          if (!roleMatch) {
-            if (sourceMemberships.orgs) {
-              for (const v2Org of sourceMemberships.orgs) {
-                debug(
-                  `checking snyk org ${org.name} against input org ${v2Org.orgName}`,
-                );
-                // handle case where org name is not found in put, what should happen?
-                if (org.name === v2Org.orgName) {
-                  orgMatch = true;
-                  debug('found matching org');
-                  if (org.role === 'collaborator') {
-                    if (v2Org.collaborators) {
-                      debug(
-                        `looking for ${gm.email} in ${v2Org.collaborators}`,
-                      );
-                      for (const collaborator of v2Org.collaborators) {
-                        if (
-                          gm.email.toLowerCase() ===
-                          collaborator.email.toLowerCase()
-                        ) {
-                          roleMatch = true;
-                          break;
-                        }
-                      }
-                    }
-                  } else if (org.role === 'admin') {
-                    if (v2Org.admins) {
-                      debug(`looking for ${gm.email} in ${v2Org.admins}`);
-                      for (const admin of v2Org.admins) {
-                        if (
-                          gm.email.toLowerCase() === admin.email.toLowerCase()
-                        ) {
-                          roleMatch = true;
-                          break;
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          if (orgMatch) {
-            if (!roleMatch) {
-              result.push({
-                userEmail: `${gm.email}`,
-                role: `${org.role}`,
-                org: `${org.name}`,
-              });
-            }
-          } else {
-            if (!orgMatch) {
-              utils.log(
-                ` - Org [${org.name}] in group [${this.name}] not found in source data for [${gm.email}] ...`,
-              );
-            }
-            //else if (!groupMatch) {
-            //  utils.log(` - Group [${groupName}] not found in source data for [${gm.email}] ...`)
-            //}
-          }
-        }
-      } else {
-        //if group admin, check if exists in source memberships
-        let roleMatch: boolean = false;
-        if (sourceMemberships.admins) {
-          for (const admin of sourceMemberships.admins) {
-            if (admin.email.toLowerCase() === gm.email.toLowerCase()) {
-              roleMatch = true;
-              break;
-            }
-          }
-        }
-        if (!roleMatch) {
-          utils.log(
-            ` - Group admin removal found [${gm.groupRole}:${gm.email}] for group [${this.name}] ...`,
-          );
-        }
-      }
-    }
-    debug(`result: ${result}`);
-    return result;
-  }
+ 
   private do_findOrgUserRolesInSnyk(
     userEmail: string,
     userRole: string,
