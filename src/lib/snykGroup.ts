@@ -15,6 +15,7 @@ import {
   GroupRole,
   PendingInvite
 } from './types';
+import { type } from 'os';
 
 const debug = debugLib('snyk:snykGroup');
 
@@ -56,7 +57,7 @@ export class snykGroup {
       snykToken: this.key,
       userAgentPrefix: 'snyk-user-sync-tool',
       burstSize: 1,
-      maxRetryCount: 10,
+      maxRetryCount: 5,
       period: 1000,
 
     });
@@ -150,20 +151,24 @@ export class snykGroup {
     }
   }
 
+
   //takes in a list of roles and returns a mapping of roles <> role:ids
   private mapRolesToIds(): any{
 
-    let mappedRoles: any = this._roles
+    let mappedRoles:any = {}
     //map roles to role id
-    mappedRoles.map( (currRole: any) => mappedRoles[currRole["name"].toUpperCase()] = currRole["publicId"]);
+    for(let currRole of this._roles){
+      mappedRoles[currRole["name"].toUpperCase()] = currRole["publicId"]
+    }
+
     //if custom admin/collaborator role does not exist then translate admin/collaborator entry in membership file into that
-    if(!("ADMIN" in this._roles)){
-    mappedRoles["ADMIN"] =mappedRoles["ORG ADMIN"]
+    if(!("ADMIN" in mappedRoles)){
+    mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
     }else{
       this._customAdminRoleExists = true
     }
-    if(!("COLLABORATOR" in this._roles)){
-    mappedRoles["COLLABORATOR"] =mappedRoles["ORG COLLABORATOR"]
+    if(!("COLLABORATOR" in mappedRoles)){
+    mappedRoles["COLLABORATOR"] = mappedRoles["ORG COLLABORATOR"]
     }else{
       this._customCollaboratorRoleExists = true
     }
@@ -329,9 +334,9 @@ export class snykGroup {
 
     for (const sm of this._snykMembershipQueue) {
       try {
-        await inputUtils.validateUserMembership(sm);
+        await this.validateUserMembership(sm);
         if (
-          this.pendingInviteExists(sm.userEmail, await this.getOrgIdFromName(sm.org)) == false || common.AUTO_PROVISION_FLAG
+          this.pendingInviteExists(sm.userEmail, await this.getOrgIdFromName(sm.org)) == false || common.AUTO_PROVISION_FLAG || await this.userExists(sm.userEmail)
         ) {
           if ((await this.userExists(sm.userEmail)) == true) {
             //begin user exists in group flow
@@ -757,5 +762,26 @@ export class snykGroup {
       roleMatch: roleMatch,
       orgMatch: orgMatch,
     };
+  }
+
+  private async validateUserMembership(snykMembership: {
+    userEmail: string;
+    role: string;
+    org: string;
+  }) {
+    var reEmail: RegExp = /\S+@\S+\.\S+/;
+    //if roles passed is not in groups valid roles then throw error
+    if (!(snykMembership.role.toUpperCase() in this.mapRolesToIds())){
+      throw new customErrors.InvalidRole(
+        `Invalid value for role`,
+      );
+    }
+    if (reEmail.test(snykMembership.userEmail) == false) {
+      //console.log('email regex = false')
+      throw new customErrors.InvalidEmail(
+        'Invalid email address format. Please verify',
+      );
+    }
+    return true;
   }
 }
