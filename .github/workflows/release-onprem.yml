@@ -1,4 +1,4 @@
-name: release
+name: release-onprem
 
 on:
   #workflow_dispatch:
@@ -28,14 +28,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: generate binary - macos
-        run: npx nexe@next dist/index.js -t mac-x64-12.16.2 -o snyk-user-sync-tool-macos
-        run: shasum -a 256 snyk-user-sync-tool-macos > snyk-user-sync-tool-macos.sha256
+        run: npx nexe@next dist/index.js -t mac-x64-12.16.2 -o onprem-snyk-user-sync-tool-macos
+        run: shasum -a 256 snyk-user-sync-tool-macos > onprem-snyk-user-sync-tool-macos.sha256
       - name: generate binary - linux_x64
-        run: npx nexe@next dist/index.js -t linux-x64-12.16.2 -o snyk-user-sync-tool-linux-x64
-        run: shasum -a 256 snyk-user-sync-tool-linux-x64 > snyk-user-sync-tool-linux-x64.sha256
+        run: npx nexe@next dist/index.js -t linux-x64-12.16.2 -o onprem-snyk-user-sync-tool-linux-x64
+        run: shasum -a 256 snyk-user-sync-tool-linux-x64 > onprem-snyk-user-sync-tool-linux-x64.sha256
       - name: generate binary - windows
-        run: npx nexe@next dist/index.js -t windows-x64-12.16.2 -o snyk-user-sync-tool-win.exe
-        run: shasum -a 256 snyk-user-sync-tool-win.exe > snyk-user-sync-tool-win.exe.sha256
+        run: npx nexe@next dist/index.js -t windows-x64-12.16.2 -o onprem-snyk-user-sync-tool-win.exe
+        run: shasum -a 256 snyk-user-sync-tool-win.exe > onprem-snyk-user-sync-tool-win.exe.sha256
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -43,9 +43,9 @@ jobs:
           # Use GH feature to populate the changelog automatically
           generate_release_notes: true
           files: |
-            snyk-user-sync-tool-macos
-            snyk-user-sync-tool-macos.sha256
-            snyk-user-sync-tool-linux-x64
-            snyk-user-sync-tool-linux-x64.sha256
-            snyk-user-sync-tool-win.exe
-            snyk-user-sync-tool-win.exe.sha256
+            onprem-snyk-user-sync-tool-macos
+            onprem-snyk-user-sync-tool-macos.sha256
+            onprem-snyk-user-sync-tool-linux-x64
+            onprem-snyk-user-sync-tool-linux-x64.sha256
+            onprem-snyk-user-sync-tool-win.exe
+            onprem-snyk-user-sync-tool-win.exe.sha256

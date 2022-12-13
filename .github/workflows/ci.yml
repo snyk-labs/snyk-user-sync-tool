@@ -6,9 +6,9 @@ name: ci
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "onprem-v2.x" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "onprem-v2.x" ]
+    branches: [ "master" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
