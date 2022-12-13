@@ -66,6 +66,7 @@ export interface v1Group {
   members: Membership[];
 }
 
+
 export interface GroupRole {
   name: string,
   description: string,
