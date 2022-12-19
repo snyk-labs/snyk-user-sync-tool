@@ -20,7 +20,6 @@ This tool is designed to be flexible to to use for:
 
 ### Known Limitations
 * if users are completely new to the system, they will be sent an invitation to their first org.  after accepting, they will be made members of any other orgs as necessary on a subsequent run.  
-* group-level memberships are not currently supported, such as group admin.  If a group admin is found in snyk, but not in the source file, it will be flagged for review but no action will be taken.
 
 ### Usage
 Grab a [release binary](https://github.com/snyk-tech-services/snyk-user-sync-tool/releases)
