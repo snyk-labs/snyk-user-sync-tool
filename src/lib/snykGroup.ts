@@ -3,7 +3,6 @@ import * as debugLib from 'debug';
 import * as pMap from 'p-map';
 import * as common from './common';
 import * as utils from './utils';
-import * as inputUtils from './inputUtils';
 import * as customErrors from './customErrors';
 import {
   GroupMember,
@@ -101,28 +100,28 @@ export class snykGroup {
     if (common.AUTO_PROVISION_FLAG == false){
       utils.log("Getting pending invites...")
       try{
-      for(let org of this.getUniqueOrgs()){
-        //validate that org in membership file exists in group orgs
-        let groupOrgNames = this._orgs.map((org)=> org.name)
-        let orgId = await this.getOrgIdFromName(org)
-
-        if(groupOrgNames.includes(org)){
-          let response = await this._requestManager.request({
-            verb: 'GET',
-            url:`/orgs/${orgId}/invites?version=2022-11-14`,
-            useRESTApi: true
-          })
-          for(let invite of response.data.data){
-            this._pendingInvites = this._pendingInvites.concat([
-              {
-                orgId:invite.relationships.org.data.id,
-                email:invite.attributes.email,
-                role:invite.attributes.email
-              }
-            ])
+        for (const org of this.getUniqueOrgs()){
+          //validate that org in membership file exists in group orgs
+          let groupOrgNames = this._orgs.map((org)=> org.name)
+          let orgId = await this.getOrgIdFromName(org)
+  
+          if(groupOrgNames.includes(org)){
+            let response = await this._requestManager.request({
+              verb: 'GET',
+              url:`/orgs/${orgId}/invites?version=2022-11-14`,
+              useRESTApi: true
+            })
+            for (const invite of response.data.data){
+              this._pendingInvites = this._pendingInvites.concat([
+                {
+                  orgId: invite.relationships.org.data.id,
+                  email: invite.attributes.email,
+                  role: invite.attributes.email
+                }
+              ])
+            }
           }
         }
-     }
       }catch(error:any){
         utils.log(error)
       }
@@ -130,21 +129,21 @@ export class snykGroup {
     //get pending provisions if auto provisioning
     if (common.AUTO_PROVISION_FLAG){
       utils.log("Getting pending user provisions...")
-      try{
-        for(let org of this.getUniqueOrgs()){
+      try {
+        for (const org of this.getUniqueOrgs()){
           let groupOrgNames = this._orgs.map((org)=> org.name)
-          if(groupOrgNames.includes(org)){
+          if (groupOrgNames.includes(org)) {
             let response = await this._requestManager.request({
               verb: 'GET',
               url:`/org/${await this.getOrgIdFromName(org)}/provision`
             })
-          for (let currProvision of response.data){
-            currProvision.orgid = await this.getOrgIdFromName(org)
-            this._pendingProvisions.push(currProvision)
+            for (const currProvision of response.data){
+              currProvision.orgid = await this.getOrgIdFromName(org)
+              this._pendingProvisions.push(currProvision)
+            }
           }
         }
-      }
-      }catch(error:any){
+      } catch(error: any) {
         utils.log(error)
       }
     }
@@ -154,27 +153,27 @@ export class snykGroup {
   //takes in a list of roles and returns a mapping of roles <> role:ids
   private mapRolesToIds(): any{
 
-    let mappedRoles:any = {}
+    let mappedRoles: any = {}
     //map roles to role id
-    for(let currRole of this._roles){
+    for (const currRole of this._roles){
       mappedRoles[currRole["name"].toUpperCase()] = currRole["publicId"]
     }
 
     //if custom admin/collaborator role does not exist then translate admin/collaborator entry in membership file into that
     if(!("ADMIN" in mappedRoles)){
-    mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
-    }else{
+      mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
+    } else {
       this._customAdminRoleExists = true
     }
     if(!("COLLABORATOR" in mappedRoles)){
-    mappedRoles["COLLABORATOR"] = mappedRoles["ORG COLLABORATOR"]
-    }else{
+      mappedRoles["COLLABORATOR"] = mappedRoles["ORG COLLABORATOR"]
+    } else {
       this._customCollaboratorRoleExists = true
     }
     return mappedRoles
   }
-  //takes in a list of orgs and returns a mapping of orgs <> org:ids
 
+  //takes in a list of orgs and returns a mapping of orgs <> org:ids
   private getUniqueOrgs(){
     let uniqueOrgs:any = []
 
@@ -194,7 +193,7 @@ export class snykGroup {
   //checks if a pending invite exists given an email and an orgid
   private pendingInviteExists(email:any, orgId:any):boolean{
     let pendingInviteExists:boolean = false
-    for(let invite of this._pendingInvites){
+    for (const invite of this._pendingInvites){
       if (invite.email.toLowerCase() == email.toLowerCase() && orgId == invite.orgId ){
         pendingInviteExists = true
       }
@@ -205,8 +204,8 @@ export class snykGroup {
   //checks if a pending invite exists given an email and an orgid
   private pendingProvisionExists(email:any, orgId:any):boolean{
     let pendingProvisionExists = false;
-    for(let provision of this._pendingProvisions){
-      if (provision.email.toLowerCase() == email.toLowerCase() && provision.orgid == orgId){
+    for (const provision of this._pendingProvisions){
+      if (provision.email.toLowerCase() == email.toLowerCase() && provision.orgId == orgId){
         pendingProvisionExists = true
       }
     }
@@ -304,6 +303,7 @@ export class snykGroup {
       queue,
       async (reqData) => {
         try {
+          console.log(`\nreqData: ${JSON.stringify(reqData, null, 2)}`);
           const res = await this._requestManager.request(reqData);
           utils.printProgress(` - ${++numProcessed}/${queue.length} completed`);
           results.push(res);
@@ -312,13 +312,18 @@ export class snykGroup {
           debug(e);
         }
       },
-      {concurrency: 1}
+      {concurrency: 10}
     )
     ;
     //utils.log(` - ${results.length} updates successfully processed`);
   }
   private async addSnykMembershipsFromQueue() {
     let userMembershipQueue = [];
+    // custom role memberships can not be added to org in one call
+    // must add as collaborator and then update role to the desired one
+    // because the update role in these cases needs to come after, we defer them
+    // to a separate list which is called after userMembershipQueue[]
+    let dependentRoleUpdateQueue =[];
 
     for (const sm of this._snykMembershipQueue) {
       try {
@@ -346,7 +351,7 @@ export class snykGroup {
               });
             } else {
               // user not in org, add them
-              let updateBody = `{
+              let userBody = `{
                 "userId": "${userId}",
                 "role": "collaborator"
               }`;
@@ -354,13 +359,13 @@ export class snykGroup {
               userMembershipQueue.push({
                 verb: 'POST',
                 url: `/group/${this.id}/org/${orgId}/members`,
-                body: updateBody,
+                body: userBody,
               });
               //assign user to custom role after adding them to org
-              updateBody = `{
+              let updateBody = `{
                 "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
               }`;
-              userMembershipQueue.push({
+              dependentRoleUpdateQueue.push({
                 verb: 'PUT',
                 url: `/org/${orgId}/members/update/${userId}`,
                 body: updateBody,
@@ -403,7 +408,7 @@ export class snykGroup {
               userMembershipQueue.push({
                 verb: 'POST',
                 useRESTApi: true,
-                url: `/orgs/${orgId}/invites?version=2022-10-06`.toString(),
+                url: `/orgs/${orgId}/invites?version=2022-10-06`,
                 body: inviteBody,
               });
             }
@@ -416,7 +421,9 @@ export class snykGroup {
       }
     }
     debug(userMembershipQueue);
-    this.processQueue(userMembershipQueue);
+    debug(dependentRoleUpdateQueue);
+    await this.processQueue(userMembershipQueue);
+    await this.processQueue(dependentRoleUpdateQueue);
   }
   private async removeSnykMembershipsFromQueue() {
     let membershipRemovalQueue = [];
@@ -481,7 +488,7 @@ export class snykGroup {
   }
   private async getSnykMembershipsToAdd() {
     var result = [];
-      result = await this.do_getSnykMembershipsToAddV1();
+    result = await this.do_getSnykMembershipsToAddV1();
     return result;
   }
   private async do_getSnykMembershipsToAddV1() {
@@ -508,8 +515,8 @@ export class snykGroup {
                       roleMatch = false
                     }else{
                       roleMatch = true;
+                      break;
                     }
-                  break;
                 }
               }
             }
@@ -566,7 +573,7 @@ export class snykGroup {
     return result;
   }
  
-  private do_findOrgUserRolesInSnyk(
+  /* private do_findOrgUserRolesInSnyk(
     userEmail: string,
     userRole: string,
     userOrg: string,
@@ -586,12 +593,13 @@ export class snykGroup {
                   this._customAdminRoleExists ||
                   org.role.toUpperCase() == "COLLABORATOR" &&
                   userRole.toUpperCase() == "COLLABORATOR" &&
-                  this._customCollaboratorRoleExists ){
-                    roleMatch = false
-                  }else{
-                    roleMatch = true;
-                  }
-                break;
+                  this._customCollaboratorRoleExists 
+                ) {
+                  roleMatch = false
+                } else {
+                  roleMatch = true;
+                  break;
+                }
               }
             }
           }
@@ -602,7 +610,7 @@ export class snykGroup {
       roleMatch: roleMatch,
       orgMatch: orgMatch,
     };
-  }
+  } */
 
   private async validateUserMembership(snykMembership: {
     userEmail: string;
@@ -612,6 +620,8 @@ export class snykGroup {
     var reEmail: RegExp = /\S+@\S+\.\S+/;
     //if roles passed is not in groups valid roles then throw error
     if (!(snykMembership.role.toUpperCase() in this.mapRolesToIds())){
+      console.log(`snykMembership.role: ${snykMembership.role}`)
+      console.log(`mappedRolesToIds: ${this.mapRolesToIds()}`)
       throw new customErrors.InvalidRole(
         `Invalid value for role`,
       );
