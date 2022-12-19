@@ -101,6 +101,8 @@ function checkEnvironment() {
   }
   utils.log(`Delete Missing enabled?: ${deleteMissingFlag}`);
   utils.log(`Invite to all orgs enabled?: ${inviteToAllOrgsFlag}`);
+  utils.log(`Auto-provision enabled?: ${autoProvisionFlag}`);
+
   debug('SNYK_IAM_API_KEYS: ');
   for (const key of snykKeys.split(',')) {
     debug(` ${key}`);

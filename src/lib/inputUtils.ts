@@ -75,7 +75,7 @@ export function printKeys(snykKeys: string) {
 
 export async function initializeDb() {
   debug(`BASE_DIR: ${common.BASE_DIR}`);
-  debug('Checking for local DB files...');
+  debug('Checking for local files...');
   if (!fs.existsSync(common.PREV_DIR)) {
     //create PREV_DIR
     debug(`prev dir does not exist, creating ${common.PREV_DIR} ...`);
@@ -136,7 +136,7 @@ export async function readFileToJson(filePath: string) {
   }
 }
 
-export async function validateUserMembership(snykMembership: {
+/*export async function validateUserMembership(snykMembership: {
   userEmail: string;
   role: string;
   org: string;
@@ -149,4 +149,4 @@ export async function validateUserMembership(snykMembership: {
     );
   }
   return true;
-}
+}*/

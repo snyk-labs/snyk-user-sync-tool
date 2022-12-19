@@ -1,15 +1,15 @@
 export interface PendingInvite {
-  orgId:string,
-  email:string,
-  role:string,
+  orgId: string,
+  email: string,
+  role: string,
 }
 
 export interface PendingProvision{
-  email:string,
-  role:string,
-  rolePublicId:string,
-  created:string,
-  orgid:string,
+  email: string,
+  role: string,
+  rolePublicId: string,
+  created: string,
+  orgId: string,
 }
 
 export interface Membership {
