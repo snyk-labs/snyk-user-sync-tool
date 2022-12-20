@@ -47,6 +47,7 @@ export interface PendingMembership {
   org: string;
   group: string;
   userExistsInOrg: string;
+  isGroupAdmin: string;
 }
 
 export interface GroupOrg {
