@@ -191,10 +191,21 @@ export class snykGroup {
   }
   
   //checks if a pending invite exists given an email and an orgid
-  private pendingInviteExists(email:any, orgId:any):boolean{
+  private pendingInviteExistsInOrg(email:any, orgId:any, ):boolean{
+    let pendingInviteExists:boolean = false
+      for (const invite of this._pendingInvites){
+      if (invite.email.toLowerCase() == email.toLowerCase() && orgId == invite.orgId ){
+        pendingInviteExists = true
+      }
+    }
+    return pendingInviteExists
+  }
+
+  //checks whether pending invite exists anywhere in group given user email
+  private pendingInviteExistsInGroup(email:any):boolean{
     let pendingInviteExists:boolean = false
     for (const invite of this._pendingInvites){
-      if (invite.email.toLowerCase() == email.toLowerCase() && orgId == invite.orgId ){
+      if (invite.email.toLowerCase() == email.toLowerCase()){
         pendingInviteExists = true
       }
     }
@@ -329,7 +340,7 @@ export class snykGroup {
       try {
         await this.validateUserMembership(sm);
         if (
-          this.pendingInviteExists(sm.userEmail, await this.getOrgIdFromName(sm.org)) == false || common.AUTO_PROVISION_FLAG || await this.userExists(sm.userEmail)
+          this.pendingInviteExistsInGroup(sm.userEmail) == false || common.AUTO_PROVISION_FLAG || await this.userExists(sm.userEmail) || common.INVITE_TO_ALL_ORGS_FLAG
         ) {
           if ((await this.userExists(sm.userEmail)) == true) {
             //begin user exists in group flow
@@ -350,27 +361,32 @@ export class snykGroup {
                 body: updateBody,
               });
             } else {
-              // user not in org, add them
-              let userBody = `{
-                "userId": "${userId}",
-                "role": "collaborator"
-              }`;
+              // if user is group admin do not attempt to demote
+              if (sm.isGroupAdmin){
+                utils.log(`${sm.userEmail} is a group admin and cannot be demoted`)
+              }else{
+                // user not in org, add them
+                let userBody = `{
+                  "userId": "${userId}",
+                  "role": "collaborator"
+                }`;
 
-              userMembershipQueue.push({
-                verb: 'POST',
-                url: `/group/${this.id}/org/${orgId}/members`,
-                body: userBody,
-              });
-              //assign user to custom role after adding them to org
-              let updateBody = `{
-                "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
-              }`;
-              dependentRoleUpdateQueue.push({
-                verb: 'PUT',
-                url: `/org/${orgId}/members/update/${userId}`,
-                body: updateBody,
-              })              
-            }
+                userMembershipQueue.push({
+                  verb: 'POST',
+                  url: `/group/${this.id}/org/${orgId}/members`,
+                  body: userBody,
+                });
+                //assign user to custom role after adding them to org
+                let updateBody = `{
+                  "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
+                }`;
+                dependentRoleUpdateQueue.push({
+                  verb: 'PUT',
+                  url: `/org/${orgId}/members/update/${userId}`,
+                  body: updateBody,
+                })              
+              }
+          }
           } else {
             //user not in group, auto provision or send invite
             let orgId = await this.getOrgIdFromName(sm.org);
@@ -397,24 +413,29 @@ export class snykGroup {
 
             //invite flow
             }else{
-              utils.log(
-                ` - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
-              );
+              if (this.pendingInviteExistsInOrg(sm.userEmail, await this.getOrgIdFromName(sm.org)) == false){
+                utils.log(
+                  ` - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
+                );
+  
+                let inviteBody = `{
+                  "email": "${sm.userEmail}",
+                  "role": "${await this.mapRolesToIds()[sm.role.toUpperCase()]}"
+                }`;
+                userMembershipQueue.push({
+                  verb: 'POST',
+                  useRESTApi: true,
+                  url: `/orgs/${orgId}/invites?version=2022-10-06`,
+                  body: inviteBody,
+                });
+              }else{
+                utils.log(`skipping ${sm.userEmail}, user already has invite pending for ${sm.org} organization`,)
+              }
 
-              let inviteBody = `{
-                "email": "${sm.userEmail}",
-                "role": "${await this.mapRolesToIds()[sm.role.toUpperCase()]}"
-              }`;
-              userMembershipQueue.push({
-                verb: 'POST',
-                useRESTApi: true,
-                url: `/orgs/${orgId}/invites?version=2022-10-06`,
-                body: inviteBody,
-              });
             }
           }
         } else {
-          utils.log(` - skipping ${sm.userEmail}, invite already pending for "${sm.org}" organization...`);
+          utils.log(`skipping ${sm.userEmail}, user already has invite pending`,);
         }
       } catch (err: any) {
         console.log(err);
@@ -497,9 +518,10 @@ export class snykGroup {
     for (const um of (this.sourceMemberships as v1Group).members) {
       var orgMatch: boolean = false;
       var roleMatch: boolean = false;
+      var isGroupAdmin: boolean = false;
 
       for (const gm of this._members) {
-        if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
+        if (gm.groupRole != 'admin') {
           if (gm.email.toUpperCase() == um.userEmail.toUpperCase()) {
             for (const org of gm.orgs) {
               if (org.name == um.org) {
@@ -521,6 +543,8 @@ export class snykGroup {
               }
             }
           }
+        }else{
+          isGroupAdmin = true
         }
       }
       if (!roleMatch) {
@@ -530,6 +554,7 @@ export class snykGroup {
           org: `${um.org}`,
           group: `${um.group}`,
           userExistsInOrg: `${orgMatch}`,
+          isGroupAdmin: `${isGroupAdmin}`
         });
       }
     }
