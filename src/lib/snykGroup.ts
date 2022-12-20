@@ -34,6 +34,7 @@ export class snykGroup {
   private _customCollaboratorRoleExists: boolean;
   private _pendingInvites: PendingInvite[] = [];
 
+
   constructor(
     id: string,
     name: string,
@@ -413,7 +414,7 @@ export class snykGroup {
 
             //invite flow
             }else{
-              if (this.pendingInviteExistsInOrg(sm.userEmail, await this.getOrgIdFromName(sm.org)) == false){
+              if (this.pendingInviteExistsInOrg(sm.userEmail, await orgId) == false){
                 utils.log(
                   ` - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
                 );
@@ -428,6 +429,13 @@ export class snykGroup {
                   url: `/orgs/${orgId}/invites?version=2022-10-06`,
                   body: inviteBody,
                 });
+
+                
+                this._pendingInvites.push({
+                  orgId: orgId,
+                  email: sm.userEmail,
+                  role: sm.role
+                })
               }else{
                 utils.log(`skipping ${sm.userEmail}, user already has invite pending for ${sm.org} organization`,)
               }
