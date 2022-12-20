@@ -150,6 +150,20 @@ export class snykGroup {
     }
   }
 
+  private checkIfUserIsGroupAdmin(userEmail:string): boolean{
+
+    let isUserGroupAdmin: boolean = false;
+
+    
+    for(let member of this._members){
+      if (member.email == userEmail && member.groupRole == 'admin'){
+        isUserGroupAdmin = true;
+      }
+    }
+    
+    return isUserGroupAdmin
+
+  }
 
   //takes in a list of roles and returns a mapping of roles <> role:ids
   private mapRolesToIds(): any{
@@ -349,21 +363,21 @@ export class snykGroup {
             const userId = await this.getUserIdFromEmail(sm.userEmail);
             debug('userExistsInOrg: ' + sm.userExistsInOrg);
             if (sm.userExistsInOrg == 'true') {
-              //user already in org, so just update existing records
-              debug('Updating existing group-org member role');
-              //change role -- update member of org
-              let updateBody = `{
-                "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
-              }`;
-              debug(`updateBody: ${updateBody}`);
-              userMembershipQueue.push({
-                verb: 'PUT',
-                url: `/org/${orgId}/members/update/${userId}`,
-                body: updateBody,
-              });
+                //user already in org, so just update existing records
+                debug('Updating existing group-org member role');
+                //change role -- update member of org
+                let updateBody = `{
+                  "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
+                }`;
+                debug(`updateBody: ${updateBody}`);
+                userMembershipQueue.push({
+                  verb: 'PUT',
+                  url: `/org/${orgId}/members/update/${userId}`,
+                  body: updateBody,
+                });
             } else {
-              // if user is group admin do not attempt to demote
-              if (sm.isGroupAdmin){
+              console.log("checking")
+              if (this.checkIfUserIsGroupAdmin(sm.userEmail)){
                 utils.log(`${sm.userEmail} is a group admin and cannot be demoted`)
               }else{
                 // user not in org, add them
@@ -386,7 +400,7 @@ export class snykGroup {
                   url: `/org/${orgId}/members/update/${userId}`,
                   body: updateBody,
                 })              
-              }
+            }
           }
           } else {
             //user not in group, auto provision or send invite
@@ -526,7 +540,6 @@ export class snykGroup {
     for (const um of (this.sourceMemberships as v1Group).members) {
       var orgMatch: boolean = false;
       var roleMatch: boolean = false;
-      var isGroupAdmin: boolean = false;
 
       for (const gm of this._members) {
         if (gm.groupRole != 'admin') {
@@ -551,8 +564,6 @@ export class snykGroup {
               }
             }
           }
-        }else{
-          isGroupAdmin = true
         }
       }
       if (!roleMatch) {
@@ -561,8 +572,7 @@ export class snykGroup {
           role: `${um.role}`,
           org: `${um.org}`,
           group: `${um.group}`,
-          userExistsInOrg: `${orgMatch}`,
-          isGroupAdmin: `${isGroupAdmin}`
+          userExistsInOrg: `${orgMatch}`
         });
       }
     }
@@ -653,8 +663,8 @@ export class snykGroup {
     var reEmail: RegExp = /\S+@\S+\.\S+/;
     //if roles passed is not in groups valid roles then throw error
     if (!(snykMembership.role.toUpperCase() in this.mapRolesToIds())){
-      console.log(`snykMembership.role: ${snykMembership.role}`)
-      console.log(`mappedRolesToIds: ${this.mapRolesToIds()}`)
+      // console.log(`snykMembership.role: ${snykMembership.role}`)
+      // console.log(`mappedRolesToIds: ${this.mapRolesToIds()}`)
       throw new customErrors.InvalidRole(
         `Invalid value for role`,
       );
