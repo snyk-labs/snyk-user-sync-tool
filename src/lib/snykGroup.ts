@@ -13,7 +13,6 @@ import {
   GroupRole,
   PendingInvite
 } from './types';
-import { type } from 'os';
 
 const debug = debugLib('snyk:snykGroup');
 
@@ -323,13 +322,11 @@ export class snykGroup {
   private async processQueue(queue: any[]) {
     const results = [];
     var numProcessed: number = 0;
-    utils.log(`Processing ${queue.length} requests to API`);
-    utils.log(' - Waiting for updates to complete...');
     await pMap (
       queue,
       async (reqData) => {
         try {
-          console.log(`\nreqData: ${JSON.stringify(reqData, null, 2)}`);
+          debug(`\nreqData: ${JSON.stringify(reqData, null, 2)}`);
           const res = await this._requestManager.request(reqData);
           utils.printProgress(` - ${++numProcessed}/${queue.length} completed`);
           results.push(res);
@@ -376,9 +373,8 @@ export class snykGroup {
                   body: updateBody,
                 });
             } else {
-              console.log("checking")
               if (this.checkIfUserIsGroupAdmin(sm.userEmail)){
-                utils.log(`${sm.userEmail} is a group admin and cannot be demoted`)
+                utils.log(`  - skipping ${sm.userEmail}, already a Group Admin`)
               }else{
                 // user not in org, add them
                 let userBody = `{
@@ -413,7 +409,7 @@ export class snykGroup {
                 );
               }else{
                 utils.log(
-                  ` - provisioning ${sm.userEmail} to "${sm.org}" organization [orgId: ${orgId}]...`,
+                  `  - provisioning ${sm.userEmail} to "${sm.org}" organization [orgId: ${orgId}]...`,
                 );
                 let provisionBody = `{
                   "email": "${sm.userEmail}",
@@ -428,9 +424,9 @@ export class snykGroup {
 
             //invite flow
             }else{
-              if (this.pendingInviteExistsInOrg(sm.userEmail, await orgId) == false){
+              //if (this.pendingInviteExistsInGroup(sm.userEmail) == false){
                 utils.log(
-                  ` - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
+                  `  - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
                 );
   
                 let inviteBody = `{
@@ -450,24 +446,32 @@ export class snykGroup {
                   email: sm.userEmail,
                   role: sm.role
                 })
-              }else{
-                utils.log(`skipping ${sm.userEmail}, user already has invite pending for ${sm.org} organization`,)
-              }
-
+              //}
             }
           }
         } else {
-          utils.log(`skipping ${sm.userEmail}, user already has invite pending`,);
+          utils.log(`  - skipping ${sm.userEmail}, has an invitiation pending`,);
         }
       } catch (err: any) {
         console.log(err);
       }
     }
-    debug(userMembershipQueue);
-    debug(dependentRoleUpdateQueue);
-    await this.processQueue(userMembershipQueue);
-    await this.processQueue(dependentRoleUpdateQueue);
+    
+    if (userMembershipQueue.length > 0) {
+      debug(userMembershipQueue);
+      utils.log(`\n  Processing ${userMembershipQueue.length} requests to API (userMembershipQueue)`);
+      await this.processQueue(userMembershipQueue);
+      console.log()
+    }
+
+    if (dependentRoleUpdateQueue.length > 0) {
+      debug(dependentRoleUpdateQueue);
+      utils.log(`  Processing ${dependentRoleUpdateQueue.length} requests to API (dependentRoleUpdateQueue)`);
+      await this.processQueue(dependentRoleUpdateQueue);
+      console.log()
+    }
   }
+
   private async removeSnykMembershipsFromQueue() {
     let membershipRemovalQueue = [];
 
@@ -486,16 +490,15 @@ export class snykGroup {
     this.processQueue(membershipRemovalQueue);
   }
   async addNewMemberships() {
-    console.log();
-    utils.log(`Checking for memberships to add...`);
+    utils.log(`  Checking for memberships to add...`);
     var membershipsToAdd = await this.getSnykMembershipsToAdd();
-    utils.log(` - ${membershipsToAdd.length} Snyk memberships to add found...`);
+    utils.log(`  - ${membershipsToAdd.length} Snyk memberships to add found`);
     debug(membershipsToAdd);
 
     let i = 1;
     for (const snykMembership of membershipsToAdd) {
       utils.log(
-        `   [${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}]`,
+        `  ${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}`,
       );
       if (!common.DRY_RUN_FLAG) {
         await this.queueSnykMembership(snykMembership);
@@ -510,7 +513,7 @@ export class snykGroup {
     var membershipsToRemove = await this.getSnykMembershipsToRemove();
 
     utils.log(
-      ` - ${membershipsToRemove.length} Snyk memberships to remove found...`,
+      ` - ${membershipsToRemove.length} Snyk memberships to remove found`,
     );
     debug(membershipsToRemove);
 
