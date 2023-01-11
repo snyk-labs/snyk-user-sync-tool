@@ -37,7 +37,7 @@ export async function processMemberships() {
       sourceMemberships = await readFileToJson(MEMBERSHIP_FILE);
       debug(`sourceMemberships: ${JSON.stringify(sourceMemberships, null, 2)}`);
       utils.log(
-        `\nMembership records in input file: ${sourceMemberships.length}\n`,
+        `\nMembership records in input file: ${sourceMemberships.length}`,
       );
 
       var uniqueOrgs = await getUniqueOrgs(sourceMemberships);
@@ -78,7 +78,7 @@ export async function processMemberships() {
             continue;
           }
 
-        utils.log(`Analyzing ${gmd.groupName} [${groupId}]`);
+        utils.log(`\nAnalyzing ${gmd.groupName} [${groupId}]`);
         spinner.start();
         await group.init();
         spinner.stop();
@@ -86,6 +86,7 @@ export async function processMemberships() {
 
         if (ADD_NEW_FLAG) {
           // process any new memberships in the input file
+          console.log()
           await group.addNewMemberships();
         }
 
