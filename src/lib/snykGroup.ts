@@ -138,7 +138,7 @@ export class snykGroup {
               url:`/org/${await this.getOrgIdFromName(org)}/provision`
             })
             for (const currProvision of response.data){
-              currProvision.orgid = await this.getOrgIdFromName(org)
+              currProvision.orgId = await this.getOrgIdFromName(org)
               this._pendingProvisions.push(currProvision)
             }
           }
@@ -330,8 +330,8 @@ export class snykGroup {
           const res = await this._requestManager.request(reqData);
           utils.printProgress(` - ${++numProcessed}/${queue.length} completed`);
           results.push(res);
-        } catch (e) {
-          utils.log(`${e}`);
+        } catch (e: any) {
+          utils.log(`${e.data.message}`);
           debug(e);
         }
       },
