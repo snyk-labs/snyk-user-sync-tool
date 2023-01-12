@@ -126,6 +126,7 @@ if connecting to a Snyk instance using a self-signed certificate, set environmen
   	    "group": "Group Name 2"
    }
 ]
+```
 
 ### Pending invites
 - If a user-org membership is being added, and the user is not part of any Snyk org in the group, the an invitation must be sent to first bring the user into the system.
