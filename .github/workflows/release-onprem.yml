@@ -19,7 +19,7 @@ jobs:
           node-version: 14
           cache: 'npm'
           cache-dependency-path: package-lock.json
-      - run: echo "GITHUB_REF: ${GITHUB_REF}"
+      - run: echo "GITHUB_REF -> ${GITHUB_REF}"
       - run: |
           npm ci
       - name: Test

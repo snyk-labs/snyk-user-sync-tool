@@ -1,0 +1,56 @@
+name: release-v3-preview
+
+on:
+  #workflow_dispatch:
+  push:
+    tags:
+      - 'v3.0.0-preview*'
+  
+jobs:
+  build_test_release:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 14
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - run: echo "GITHUB_REF -> ${GITHUB_REF}"
+      - run: |
+          npm ci
+      # - name: Test
+      #  id: test
+      #  run: |
+      #    npm run test:unit
+      # - name: Checkout
+      #  uses: actions/checkout@v3
+      - name: generate binary - macos
+        run: npx nexe@next dist/index.js -t mac-x64-12.16.2 -o snyk-user-sync-tool-v3-preview-macos
+      - name: generate checksum - macos
+        run: shasum -a 256 snyk-user-sync-tool-v3-preview-macos > snyk-user-sync-tool-v3-preview-macos.sha256
+      - name: generate binary - linux_x64
+        run: npx nexe@next dist/index.js -t linux-x64-12.16.2 -o snyk-user-sync-tool-v3-preview-linux-x64
+      - name: generate checksum - linux_x64
+        run: shasum -a 256 snyk-user-sync-tool-v3-preview-linux-x64 > snyk-user-sync-tool-v3-preview-linux-x64.sha256
+      - name: generate binary - windows
+        run: npx nexe@next dist/index.js -t windows-x64-12.16.2 -o snyk-user-sync-tool-v3-preview-win.exe
+      - name: generate checksum - windows
+        run: shasum -a 256 snyk-user-sync-tool-v3-preview-win.exe > snyk-user-sync-tool-v3-preview-win.exe.sha256
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          # Use GH feature to populate the changelog automatically
+          generate_release_notes: true
+          files: |
+            snyk-user-sync-tool-v3-preview-macos
+            snyk-user-sync-tool-v3-preview-macos.sha256
+            snyk-user-sync-tool-v3-preview-linux-x64
+            snyk-user-sync-tool-v3-preview-linux-x64.sha256
+            snyk-user-sync-tool-v3-preview-win.exe
+            snyk-user-sync-tool-v3-preview-win.exe.sha256
+
