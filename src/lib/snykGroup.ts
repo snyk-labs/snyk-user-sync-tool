@@ -520,7 +520,7 @@ export class snykGroup {
     let i = 1;
     for (const snykMembership of membershipsToRemove) {
       utils.log(
-        ` - ${i} of ${membershipsToRemove.length} [${snykMembership.org} | ${snykMembership.userEmail}]`,
+        ` - ${i} of ${membershipsToRemove.length} [${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}]`,
       );
       if (!common.DRY_RUN_FLAG) {
         await this.queueSnykMembershipRemoval(snykMembership);
@@ -593,19 +593,25 @@ export class snykGroup {
     for (const gm of this._members) {
       if (gm.groupRole != 'admin') {
         for (const org of gm.orgs) {
-          let roleMatch: boolean = false;
+          // let roleMatch: boolean = false;
+          let userOrgMatch: boolean = false;
           for (const um of (this.sourceMemberships as v1Group).members) {
             if (um.userEmail.toUpperCase() == gm.email.toUpperCase()) {
               if (um.org == org.name) {
-                if (um.role.toUpperCase() == org.role.toUpperCase()) {
-                  roleMatch = true;
-                  break;
-                }
+                // fix, if user is still in an org but with a different role
+                // then --add-new should catch it since it handles both adds and updates
+                //if (um.role.toUpperCase() == org.role.toUpperCase()) {
+                //  roleMatch = true;
+                //  break;
+                userOrgMatch = true;
+                break;
+                // }
               }
             }
           }
 
-          if (!roleMatch) {
+          //if (!roleMatch) {
+          if (!userOrgMatch) {
             result.push({
               userEmail: `${gm.email}`,
               role: `${org.role}`,
