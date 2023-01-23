@@ -42,7 +42,7 @@ export class snykGroup {
 
     this._requestManager = new requestsManager({
       snykToken: this.key,
-      userAgentPrefix: 'snyk-user-sync-tool',
+      userAgentPrefix: 'snyk-user-sync-tool-v3.0.0',
     });
   }
 
