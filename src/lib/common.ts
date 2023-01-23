@@ -21,7 +21,6 @@ export var API_KEYS: string;
 export var MEMBERSHIP_FILE: string;
 export var API_BASE_URI: string;
 
-
 export function setEnvironment(
   dryRunFlag: boolean,
   addNewFlag: boolean,
