@@ -2,11 +2,11 @@
 
 ![snyk-oss-category](https://github.com/snyk-labs/oss-images/blob/main/oss-community.jpg)
 
-***
+## User sync tool
+
 [![Known Vulnerabilities](https://snyk.io/test/github/snyk-labs/snyk-user-sync-tool/badge.svg?targetFile=package.json)](https://snyk.io/test/github/snyk-tech-services/snyk-user-sync-tool?targetFile=package.json)
 
-## snyk-user-sync-tool
-sync user org memberships from an external source into (your on-premise instance) of Snyk
+sync user org memberships from an external source into Snyk
 - add/update users to orgs (when using `--add-new` flag
 - remove users from orgs (when using `--delete-missing` flag)
 
