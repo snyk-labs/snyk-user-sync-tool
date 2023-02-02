@@ -20,7 +20,6 @@ This tool is designed to be flexible to to use for:
 
 ### Known Limitations
 * if users are completely new to the system, they will be sent an invitation to their first org.  after accepting, they will be made members of any other orgs as necessary on a subsequent run.  
-* group-level memberships are not currently supported, such as group admin.  If a group admin is found in snyk, but not in the source file, it will be flagged for review but no action will be taken.
 
 ### Usage
 Grab a [release binary](https://github.com/snyk-tech-services/snyk-user-sync-tool/releases)
@@ -37,13 +36,16 @@ Usage: snyk-user-sync-tool [OPTIONS]
                 SaaS is used.
 
 Options:
+  --auto-provison       Automatically provision users that are new to the group
+                        to their respective orgs.
+                        This requires that your snyk token is from a non-service
+                        account that is signed in through SSO
   --version             Show version number                            [boolean]
   --add-new             add memberships if they are found in the
                         membership-file and are not in Snyk
   --delete-missing      delete memberships from Snyk if they are found
                         to be missing from the membership-file (use with
                         caution)
-  --v2                  use v2 file format
   --membership-file     path to membership file
                         if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE
   --api-keys            list of api keys per group
@@ -61,14 +63,7 @@ snyk-user-sync-tool --v2 --dry-run --membership-file=snyk-memberships-v2.json --
 ```
 run with debugging enabled: `DEBUG=* snyk-user-sync-tool`
 
-If initial job run, `db`, `prev`, and `log` directories will be created
-
-
-__Note: there are two different supported file formats__ 
-- The default is the user membership flat structure
-- v2 format (used in conjunction with the --v2 flag) is a nested structure per group
-
-For more details, see the [Membership file format](#membership-file-format) section.
+If initial job run, `prev`, and `log` directories will be created
 
 
 ### Setup Environment
@@ -102,9 +97,6 @@ set SNYK_API=https://<instance host or ip>/api
 if connecting to a Snyk instance using a self-signed certificate, set environment variable `NODE_TLS_REJECT_UNAUTHORIZED=0`
 
 ### Membership File format
-
-There are two file formats supported:
-#### 1. User-based (default)
    flat representation, each record represents a user membership consisting of their userEmail, role, org, and group. 
 
 ```
@@ -135,74 +127,6 @@ There are two file formats supported:
    }
 ]
 ```
-#### 2. Group-based (--v2)
-   nested representation, comprising a set of groups each containing the group name, the set of orgs, and the set of both admins and collaborators within those orgs.  
-
-This looks like: 
-
-```
-{ 
-    "groups": [
-        {
-            "groupName": "Some Group",
-            "admins": [],
-            "orgs": [
-                {
-                    "orgName": "Some Org",
-                    "collaborators": [
-                        {
-                            "email": "user@email.address"
-                        },
-                        {
-                            "email": "user2@email.address"
-                        }
-                    ]
-                },
-                {
-                    "orgName": "Some Other Org",
-                    "collaborators": [
-                        {
-                            "email": "user3@email.address"
-                        },
-                        {
-                            "email": "user4@email.address"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "groupName": "Some Other Group",
-            "admins": [
-                {
-                    "email": "user3@email.address"
-                },
-                {
-                    "email": "user4@email.address"
-                }
-            ],
-            "orgs": [
-                {
-                    "orgName": "Yet Another Org",
-                    "collaborators": [
-                        {
-                            "email": "user6@email.address"
-                        },
-                        {
-                            "email": "user7@email.address"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
-```
-
-- Ensure that the org name and group match exactly including the case
-- Possible values for role are *collaborator* and *admin*
-- Previous job run input is saved in `prev/` directory
-- Group Names should be unique and Org Names should be unique within a Group
 
 ### Pending invites
 - If a user-org membership is being added, and the user is not part of any Snyk org in the group, the an invitation must be sent to first bring the user into the system.

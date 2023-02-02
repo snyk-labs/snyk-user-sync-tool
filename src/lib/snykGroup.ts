@@ -39,7 +39,6 @@ export class snykGroup {
     this.sourceMemberships = sourceMemberships;
     this._snykMembershipQueue = [];
     this._snykMembershipRemovalQueue = [];
-
     this._requestManager = new requestsManager({
       snykToken: this.key,
       userAgentPrefix: common.USER_AGENT_PREFIX,

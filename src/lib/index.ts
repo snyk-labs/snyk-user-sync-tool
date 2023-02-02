@@ -9,10 +9,10 @@ import {
   PENDING_INVITES_FILE,
   DRY_RUN_FLAG,
   INVITE_TO_ALL_ORGS_FLAG,
-  V2_FORMAT_FLAG,
   setEnvironment,
   ADD_NEW_FLAG,
   DELETE_MISSING_FLAG,
+  AUTO_PROVISION_FLAG,
 } from './common';
 import { exit } from 'process';
 
@@ -37,10 +37,6 @@ const argv = yargs
                        to be missing from the membership-file (use with caution)`,
       demandOption: false,
     },
-    v2: {
-      describe: `use v2 file format`,
-      demandOption: false,
-    },
     'membership-file': {
       describe: `path to membership file
                        if not specified, taken from SNYK_IAM_MEMBERSHIP_FILE`,
@@ -57,6 +53,11 @@ const argv = yargs
     },
     'invite-to-all-orgs': {
       describe: `send new users an invite to every org, rather than only the first`,
+      demandOption: false,
+    },
+    'auto-provison': {
+      describe: `Automatically provision users that are new to the group to their respective orgs. 
+      This requires that your snyk token is from a non-service account that is signed in through SSO`,
       demandOption: false,
     },
     debug: {
@@ -84,11 +85,13 @@ function checkEnvironment() {
   const deleteMissingFlag: boolean = Boolean(
     argv['delete-missing'] ? argv['delete-missing'] : false,
   );
+  const autoProvisionFlag: boolean = Boolean(
+    argv['auto-provision'] ? argv['auto-provision'] : false,
+  );
   const dryRunFlag = Boolean(argv['dry-run'] ? argv['dry-run'] : false);
   const inviteToAllOrgsFlag: boolean = Boolean(
     argv['invite-to-all-orgs'] ? argv['invite-to-all-orgs'] : false,
   );
-  const v2FormatFlag: boolean = Boolean(argv['v2'] ? argv['v2'] : false);
 
   utils.log(`dry run: ${dryRunFlag}`);
   if (snykApiBaseUri == 'undefined') {
@@ -96,9 +99,10 @@ function checkEnvironment() {
   } else {
     utils.log(`snykApiBaseUri: ${snykApiBaseUri}`);
   }
-  utils.log(`v2 format enabled?: ${v2FormatFlag}`);
   utils.log(`Delete Missing enabled?: ${deleteMissingFlag}`);
   utils.log(`Invite to all orgs enabled?: ${inviteToAllOrgsFlag}`);
+  utils.log(`Auto-provision enabled?: ${autoProvisionFlag}`);
+
   debug('SNYK_IAM_API_KEYS: ');
   for (const key of snykKeys.split(',')) {
     debug(` ${key}`);
@@ -115,21 +119,20 @@ function checkEnvironment() {
     utils.log(`snykMembershipFile: ${snykMembershipFile}`);
     utils.log(`addNewFlag: ${addNewFlag}`);
     utils.log(`deleteMissingFlag: ${deleteMissingFlag}`);
+    utils.log(`autoProvision: ${autoProvisionFlag}`);
     yargs.showHelp();
     process.exit(1);
   }
-
-  utils.log(`\nPending invites file: ${PENDING_INVITES_FILE}`);
 
   setEnvironment(
     dryRunFlag,
     addNewFlag,
     inviteToAllOrgsFlag,
     deleteMissingFlag,
-    v2FormatFlag,
     snykKeys,
     snykMembershipFile,
     snykApiBaseUri,
+    autoProvisionFlag
   );
 }
 

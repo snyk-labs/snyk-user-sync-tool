@@ -4,7 +4,7 @@ import * as path from 'path';
 import { snykGroup } from './snykGroup';
 import * as common from './common';
 import * as utils from './utils';
-import { GroupMember, Membership, PendingInvite } from './types';
+import { GroupMember, Membership } from './types';
 import * as customErrors from './customErrors';
 
 const debug = debugLib('snyk:inputUtils');
@@ -49,70 +49,7 @@ export async function getUniqueOrgs(userMemberships: Membership[]) {
   return result;
 }
 
-async function getPendingInvites(): Promise<PendingInvite[]> {
-  let pendingInvites: PendingInvite[] = [];
-  utils.log(`Checking status of pending invites... `);
-  if (fs.statSync(common.PENDING_INVITES_FILE)['size'] == 0) {
-    debug('None Found (0 byte file)');
-    return [];
-  }
-  try {
-    pendingInvites = await readFileToJson(common.PENDING_INVITES_FILE);
-    debug(pendingInvites);
-  } catch (err: any) {
-    if (err instanceof SyntaxError) {
-      utils.log('Invalid JSON, skipping...');
-    } else {
-      utils.log(err.name);
-    }
-  }
-  return pendingInvites;
-}
 
-export async function removeAcceptedPendingInvites(
-  groupId: string,
-  groupMembers: GroupMember[],
-) {
-  let result: PendingInvite[] = [];
-
-  // get pendingInvites for this group
-  let pendingInvites: PendingInvite[] = await getPendingInvites();
-
-  debug(`pending invites: ${JSON.stringify(pendingInvites, null, 2)}`);
-
-  if (pendingInvites.length > 0) {
-    for (const pi of pendingInvites) {
-      let found: boolean = false;
-      for (const gm of groupMembers) {
-        if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
-          if (
-            groupId == pi.groupId &&
-            gm.email.toUpperCase() == pi.userEmail.toUpperCase()
-          ) {
-            found = true;
-            utils.log(
-              `found accepted invite for ${pi.userEmail} in ${pi.groupName}`,
-            );
-            break;
-          }
-        }
-      }
-      if (found == false) {
-        debug('pushing invite to result:');
-        debug(pi);
-        result.push(pi);
-      }
-    }
-    debug(`writing ${result.length} invites to pending invite file`);
-
-    if (!common.DRY_RUN_FLAG) {
-      fs.writeFileSync(
-        common.PENDING_INVITES_FILE,
-        JSON.stringify(result, null, 4),
-      );
-    }
-  }
-}
 
 export async function getUniqueGroups(userMemberships: Membership[]) {
   const result = [];
@@ -138,25 +75,7 @@ export function printKeys(snykKeys: string) {
 
 export async function initializeDb() {
   debug(`BASE_DIR: ${common.BASE_DIR}`);
-  debug('Checking for local DB files...');
-  if (!fs.existsSync(common.DB_DIR)) {
-    //create DB_DIR
-    debug(`db dir does not exist, creating ${common.DB_DIR} ...`);
-    fs.mkdirSync(common.DB_DIR);
-  } else {
-    debug(`db dir (${common.DB_DIR}) already exists`);
-  }
-  if (!fs.existsSync(common.PENDING_INVITES_FILE)) {
-    //create empty PENDING_INVITES_FILE
-    debug(
-      `pending invites file does not exist, initializing ${common.PENDING_INVITES_FILE} ...`,
-    );
-    fs.writeFileSync(common.PENDING_INVITES_FILE, '[]');
-  } else {
-    debug(
-      `pending invites file (${common.PENDING_INVITES_FILE}) already exists`,
-    );
-  }
+  debug('Checking for local files...');
   if (!fs.existsSync(common.PREV_DIR)) {
     //create PREV_DIR
     debug(`prev dir does not exist, creating ${common.PREV_DIR} ...`);
@@ -217,35 +136,12 @@ export async function readFileToJson(filePath: string) {
   }
 }
 
-export async function validateUserMembership(snykMembership: {
+/*export async function validateUserMembership(snykMembership: {
   userEmail: string;
   role: string;
   org: string;
 }) {
   var reEmail: RegExp = /\S+@\S+\.\S+/;
-  // default valid roles
-  let validRoles: string[] = [
-    'admin',
-    'collaborator',
-    'restrictedCollaborator',
-  ];
-  //override default valid roles when conf/roles.json is present
-  if (fs.existsSync(common.VALID_ROLES_FILE)) {
-    let validRoles: string[] = await readFileToJson(common.VALID_ROLES_FILE);
-  }
-  if (
-    !(
-      validRoles
-        .map((x) => {
-          return x.toUpperCase();
-        })
-        .indexOf(snykMembership.role.toUpperCase()) >= 0
-    )
-  ) {
-    throw new customErrors.InvalidRole(
-      `Invalid value for role. Acceptable values are one of [${validRoles}]`,
-    );
-  }
   if (reEmail.test(snykMembership.userEmail) == false) {
     //console.log('email regex = false')
     throw new customErrors.InvalidEmail(
@@ -253,4 +149,4 @@ export async function validateUserMembership(snykMembership: {
     );
   }
   return true;
-}
+}*/

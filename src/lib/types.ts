@@ -1,10 +1,15 @@
 export interface PendingInvite {
-  groupName: string;
-  groupId: string;
-  orgName: string;
-  orgId: string;
-  userEmail: string;
-  date: Date;
+  orgId: string,
+  email: string,
+  role: string,
+}
+
+export interface PendingProvision{
+  email: string,
+  role: string,
+  rolePublicId: string,
+  created: string,
+  orgId: string,
 }
 
 export interface Membership {
@@ -61,19 +66,11 @@ export interface v1Group {
   members: Membership[];
 }
 
-export interface v2Group {
-  groupName: string;
-  admins?: v2User[];
-  orgs?: v2Org[];
-}
 
-export interface v2User {
-  fullName: string;
-  email: string;
-}
-
-export interface v2Org {
-  orgName: string;
-  collaborators?: v2User[];
-  admins?: v2User[];
+export interface GroupRole {
+  name: string,
+  description: string,
+  publicId: string,
+  created: string,
+  modified: string
 }
