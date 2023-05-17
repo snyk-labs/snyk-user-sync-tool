@@ -10,6 +10,7 @@ import {
   DRY_RUN_FLAG,
   INVITE_TO_ALL_ORGS_FLAG,
   setEnvironment,
+  V2_FORMAT_FLAG,
   ADD_NEW_FLAG,
   DELETE_MISSING_FLAG,
   AUTO_PROVISION_FLAG,
@@ -35,6 +36,10 @@ const argv = yargs
     'delete-missing': {
       describe: `delete memberships from Snyk if they are found 
                        to be missing from the membership-file (use with caution)`,
+      demandOption: false,
+    },
+    v2: {
+      describe: `use v2 file format`,
       demandOption: false,
     },
     'membership-file': {
@@ -92,6 +97,7 @@ function checkEnvironment() {
   const inviteToAllOrgsFlag: boolean = Boolean(
     argv['invite-to-all-orgs'] ? argv['invite-to-all-orgs'] : false,
   );
+  const v2FormatFlag: boolean = Boolean(argv['v2'] ? argv['v2'] : false);
 
   utils.log(`dry run: ${dryRunFlag}`);
   if (snykApiBaseUri == 'undefined') {
