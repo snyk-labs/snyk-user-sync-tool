@@ -105,6 +105,7 @@ function checkEnvironment() {
   } else {
     utils.log(`snykApiBaseUri: ${snykApiBaseUri}`);
   }
+  utils.log(`v2 format enabled?: ${v2FormatFlag}`);
   utils.log(`Delete Missing enabled?: ${deleteMissingFlag}`);
   utils.log(`Invite to all orgs enabled?: ${inviteToAllOrgsFlag}`);
   utils.log(`Auto-provision enabled?: ${autoProvisionFlag}`);
@@ -135,6 +136,7 @@ function checkEnvironment() {
     addNewFlag,
     inviteToAllOrgsFlag,
     deleteMissingFlag,
+    v2FormatFlag,
     snykKeys,
     snykMembershipFile,
     snykApiBaseUri,
