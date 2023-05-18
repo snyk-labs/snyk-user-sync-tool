@@ -3,6 +3,7 @@ import {
   PENDING_INVITES_FILE,
   ADD_NEW_FLAG,
   DRY_RUN_FLAG,
+  V2_FORMAT_FLAG,
   MEMBERSHIP_FILE,
   API_KEYS,
   DELETE_MISSING_FLAG,
@@ -10,7 +11,8 @@ import {
 import {
   readFileToJson,
   getUniqueGroups,
-  getUniqueOrgs
+  getUniqueOrgs,
+  convertV2intoV1
 } from './inputUtils';
 import { snykGroup } from './snykGroup';
 import { snykGroupsMetadata } from './snykGroupsMetadata';
@@ -30,7 +32,21 @@ export async function processMemberships() {
 
   await groupsMetadata.init();
   debug(`groupsMetadata: ${JSON.stringify(groupsMetadata, null, 2)}`);
-
+  if (V2_FORMAT_FLAG) {
+    //process v2 format
+    debug('processing v2 format');
+    sourceGroups = [];
+    try {
+      sourceGroups = (await readFileToJson(MEMBERSHIP_FILE)).groups;
+      debug(`sourceGroups: ${JSON.stringify(sourceGroups, null, 2)}`);
+      utils.log(`\nGroups in input file: ${sourceGroups.length}\n`);
+      console.log(sourceGroups)
+      sourceMemberships = convertV2intoV1(sourceGroups)
+    } catch (err: any) {
+      utils.log(`error processing source data: ${err.message}`);
+      process.exit(1);
+    }
+  }else{
     debug('processing v1 format');
     var sourceMemberships: Membership[] = [];
     try {
@@ -46,6 +62,7 @@ export async function processMemberships() {
       utils.log(`unable to process source data, check format`);
       process.exit(1);
     }
+  }
 
   // process each unique group sequentially
   for (const gmd of await groupsMetadata.getAllGroupsMetadata()) {
@@ -66,6 +83,7 @@ export async function processMemberships() {
               return el.group === gmd.groupName;
             }),
           };
+          console.log(sourceMembershipsForGroup)
           if (sourceMembershipsForGroup !== undefined) {
             group = new snykGroup(
               String(groupId),

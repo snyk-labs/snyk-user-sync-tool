@@ -1,0 +1,16 @@
+{
+    "groups":[{
+        "groupName": "Oleg Shprengel",
+        "admins": [],
+        "orgs": [
+            {
+            "orgName" : "template",
+            "olegsadmin": [
+                {
+                    "email" : "defaultorgtest1@oshprengelgmail.onmicrosoft.com"
+                }
+            ]
+            }
+        ]
+    }]
+}

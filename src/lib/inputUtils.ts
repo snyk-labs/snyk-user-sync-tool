@@ -4,8 +4,9 @@ import * as path from 'path';
 import { snykGroup } from './snykGroup';
 import * as common from './common';
 import * as utils from './utils';
-import { GroupMember, Membership } from './types';
+import { GroupMember, Membership, v1Group, v2Group, v2Org, v2User } from './types';
 import * as customErrors from './customErrors';
+import { group } from 'console';
 
 const debug = debugLib('snyk:inputUtils');
 
@@ -113,7 +114,27 @@ function pruneDir(dir: string) {
     counter++;
   }
 }
+export function convertV2intoV1(input:any): Membership[] {
+  var convertedMemberships:Membership[] = []
 
+  for(let currGroup of input as any){
+    for (var currOrg of currGroup.orgs as any){
+      for (var [role , members]of Object.entries(currOrg)){
+        if(role !== "orgName"){
+          for (var currMember of members as any){
+            convertedMemberships.push({
+              userEmail: currMember.email,
+              role: role,
+              org: currOrg.orgName,
+              group: currGroup.groupName
+            })
+          }
+        }
+      }
+    }
+  }
+  return convertedMemberships
+}
 export async function readFileToJson(filePath: string) {
   try {
     const data = await fs.promises.readFile(filePath, 'utf8');
