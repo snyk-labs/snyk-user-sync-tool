@@ -1,13 +1,12 @@
 {
     "groups":[{
         "groupName": "Oleg Shprengel",
-        "admins": [],
         "orgs": [
             {
             "orgName" : "template",
-            "testrole": [
+            "admins": [
                 {
-                    "email" : "oshprengel@gmail.com"
+                    "email" : "defaultorgtest1@oshprengelgmail.onmicrosoft.com"
                 }
             ]
             }

@@ -173,16 +173,28 @@ export class snykGroup {
       mappedRoles[currRole["name"].toUpperCase()] = currRole["publicId"]
     }
 
+    let mappedRolesKeys = Object.keys(mappedRoles)
+    console.log()
     //if custom admin/collaborator role does not exist then translate admin/collaborator entry in membership file into that
-    if(!("ADMIN" in mappedRoles)){
+    if(!mappedRolesKeys.includes("ADMIN")){
       mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
     } else {
       this._customAdminRoleExists = true
     }
-    if(!("COLLABORATOR" in mappedRoles)){
+    if(!mappedRolesKeys.includes("ADMINS")){
+      mappedRoles["ADMINS"] = mappedRoles["ORG ADMIN"]
+    } else {
+      this._customAdminRoleExists = true
+    }
+    if(!mappedRolesKeys.includes("COLLABORATORS")){
+      mappedRoles["COLLABORATORS"] = mappedRoles["ORG COLLABORATOR"]
+    } else {
+      this._customAdminRoleExists = true
+    }
+    if(!mappedRolesKeys.includes("COLLABORATOR")){
       mappedRoles["COLLABORATOR"] = mappedRoles["ORG COLLABORATOR"]
     } else {
-      this._customCollaboratorRoleExists = true
+      this._customAdminRoleExists = true
     }
     return mappedRoles
   }
@@ -265,7 +277,8 @@ export class snykGroup {
         }`;
     if (
       role.toUpperCase() == 'ADMIN' ||
-      role.toUpperCase() == 'ADMINISTRATOR'
+      role.toUpperCase() == 'ADMINISTRATOR' ||
+      role.toUpperCase() == 'ADMINISTRATORS'
     ) {
       inviteBody = `{
                 "email": "${email}",
@@ -552,12 +565,18 @@ export class snykGroup {
                 orgMatch = true;
                 if (org.role.toUpperCase() == um.role.toUpperCase()) {
                   if (
+                    org.role.toUpperCase() == "ADMINS" &&
+                    um.role.toUpperCase() == "ADMINS" && 
+                    this._customAdminRoleExists||
                     org.role.toUpperCase() == "ADMIN" &&
                     um.role.toUpperCase() == "ADMIN" &&
                     this._customAdminRoleExists ||
                     org.role.toUpperCase() == "COLLABORATOR" &&
                     um.role.toUpperCase() == "COLLABORATOR" &&
-                    this._customCollaboratorRoleExists ){
+                    this._customCollaboratorRoleExists ||
+                    org.role.toUpperCase() == "COLLABORATORS" &&
+                    um.role.toUpperCase() == "COLLABORATORS" &&
+                    this._customCollaboratorRoleExists){
                       roleMatch = false
                     }else{
                       roleMatch = true;

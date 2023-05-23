@@ -1,11 +1,15 @@
 {
     "groups":[{
         "groupName": "Oleg Shprengel",
-        "admins": [],
         "orgs": [
             {
             "orgName" : "template",
-            "olegscollab": [
+            "No monitor": [
+                {
+                    "email" : "defaultorgtest2@oshprengelgmail.onmicrosoft.com"
+                }
+            ],
+            "admins" : [
                 {
                     "email" : "defaultorgtest1@oshprengelgmail.onmicrosoft.com"
                 }
