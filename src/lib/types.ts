@@ -64,7 +64,6 @@ export interface OrgGroup {
 
 export interface v1Group {
   members: Membership[];
-  admins?: v2User[];
 }
 
 export interface v2Orgtype{

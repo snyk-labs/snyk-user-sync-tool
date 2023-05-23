@@ -11,7 +11,8 @@ import {
   v1Group,
   PendingMembership,
   GroupRole,
-  PendingInvite
+  PendingInvite,
+  Membership
 } from './types';
 
 const debug = debugLib('snyk:snykGroup');
@@ -28,6 +29,7 @@ export class snykGroup {
   private _buffer: number = 250;
   private _pendingProvisions: PendingProvision[] = [];
   private _roles: GroupRole[] = [];
+  private _groupAdmins: any[] = [];
   private _requestManager: requestsManager;
   private _customAdminRoleExists: boolean;
   private _customCollaboratorRoleExists: boolean;
@@ -39,6 +41,7 @@ export class snykGroup {
     name: string,
     key: string,
     sourceMemberships:  v1Group,
+    groupAdmins: any
   ) {
     this._customAdminRoleExists = false;
     this._customCollaboratorRoleExists = false;
@@ -50,6 +53,8 @@ export class snykGroup {
     this.sourceMemberships = sourceMemberships;
     this._snykMembershipQueue = [];
     this._snykMembershipRemovalQueue = [];
+    this._groupAdmins = groupAdmins;
+
 
     this._requestManager = new requestsManager({
       snykToken: this.key,
@@ -174,7 +179,6 @@ export class snykGroup {
     }
 
     let mappedRolesKeys = Object.keys(mappedRoles)
-    console.log()
     //if custom admin/collaborator role does not exist then translate admin/collaborator entry in membership file into that
     if(!mappedRolesKeys.includes("ADMIN")){
       mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
@@ -601,6 +605,7 @@ export class snykGroup {
     return result;
   }
   private async getSnykMembershipsToRemove() {
+    //clean up 
     let result = [];
 
       result = await this.do_getSnykMembershipsToRemoveV1();
@@ -636,6 +641,26 @@ export class snykGroup {
               role: `${org.role}`,
               org: `${org.name}`,
             });
+          }
+        }
+      }else{
+        console.log(this._groupAdmins)
+        
+        if (this._groupAdmins.length){
+          let roleMatch: boolean = false;
+          for(let sourceAdmin of this._groupAdmins ){
+            console.log(gm.email.toLocaleLowerCase())
+            console.log(sourceAdmin)
+            if (gm.email.toLocaleLowerCase() == sourceAdmin){
+              
+              roleMatch = true
+              break
+            }
+          }
+          if (!roleMatch){
+            utils.log(
+              ` - Group admin removal found [${gm.groupRole}:${gm.email}] for group [${this.name}] ...`,
+            )
           }
         }
       }

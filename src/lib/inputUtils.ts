@@ -135,6 +135,21 @@ export function convertV2intoV1(input:any): Membership[] {
   }
   return convertedMemberships
 }
+export function getGroupAdminsFromV2(input:any): any[]{
+  let adminList = []
+  for(let currGroup of input as any){
+    if("admins" in currGroup){
+      for (let admin of currGroup.admins as any){
+        adminList.push({
+          "email" : admin["email"],
+          "groupName" : currGroup.groupName
+        })
+      }
+    }
+  }
+
+  return adminList
+}
 export async function readFileToJson(filePath: string) {
   try {
     const data = await fs.promises.readFile(filePath, 'utf8');
