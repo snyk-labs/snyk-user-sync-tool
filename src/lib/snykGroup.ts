@@ -643,14 +643,10 @@ export class snykGroup {
             });
           }
         }
-      }else{
-        console.log(this._groupAdmins)
-        
+      }else{ 
         if (this._groupAdmins.length){
           let roleMatch: boolean = false;
           for(let sourceAdmin of this._groupAdmins ){
-            console.log(gm.email.toLocaleLowerCase())
-            console.log(sourceAdmin)
             if (gm.email.toLocaleLowerCase() == sourceAdmin){
               
               roleMatch = true
