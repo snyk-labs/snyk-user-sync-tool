@@ -36,7 +36,7 @@ Usage: snyk-user-sync-tool [OPTIONS]
                 SaaS is used.
 
 Options:
-  --auto-provison       Automatically provision users that are new to the group
+  --auto-provision       Automatically provision users that are new to the group
                         to their respective orgs.
                         This requires that your snyk token is from a non-service
                         account that is signed in through SSO
