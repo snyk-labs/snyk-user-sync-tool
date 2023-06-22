@@ -55,7 +55,7 @@ const argv = yargs
       describe: `send new users an invite to every org, rather than only the first`,
       demandOption: false,
     },
-    'auto-provison': {
+    'auto-provision': {
       describe: `Automatically provision users that are new to the group to their respective orgs. 
       This requires that your snyk token is from a non-service account that is signed in through SSO`,
       demandOption: false,
