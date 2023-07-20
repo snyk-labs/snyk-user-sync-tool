@@ -11,6 +11,7 @@ export const LOG_DIR = 'log/';
 export const PENDING_INVITES_FILE = DB_DIR.concat('/pending_invites.json');
 export const VALID_ROLES_FILE = BASE_DIR.concat('conf/roles.json');
 export const LOG_LIMIT = 25;
+export const USER_AGENT_PREFIX = 'snyk-user-sync-tool-v3.0.0-preview';
 export var DRY_RUN_FLAG: boolean = false;
 export var ADD_NEW_FLAG: boolean = false;
 export var INVITE_TO_ALL_ORGS_FLAG: boolean = false;

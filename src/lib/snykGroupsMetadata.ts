@@ -27,7 +27,7 @@ export class snykGroupsMetadata {
       let groupKey = keySplit[1];
       let _requestManager = new requestsManager({
         snykToken: groupKey,
-        userAgentPrefix: 'onprem-user-sync-tool',
+        userAgentPrefix: common.USER_AGENT_PREFIX,
       });
       try {
         //sleep(this._buffer)

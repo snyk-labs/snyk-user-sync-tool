@@ -3,15 +3,14 @@ import * as debugLib from 'debug';
 import * as pMap from 'p-map';
 import * as common from './common';
 import * as utils from './utils';
+import * as inputUtils from './inputUtils';
 import * as customErrors from './customErrors';
 import {
   GroupMember,
   GroupOrg,
-  PendingProvision,
+  v2Group,
   v1Group,
   PendingMembership,
-  GroupRole,
-  PendingInvite
 } from './types';
 
 const debug = debugLib('snyk:snykGroup');
@@ -20,46 +19,30 @@ export class snykGroup {
   id: string;
   name: string;
   key: string;
-  sourceMemberships: v1Group;
+  sourceMemberships: v2Group | v1Group;
   private _members: GroupMember[] = [];
   private _orgs: GroupOrg[] = [];
   private _snykMembershipQueue: any[];
   private _snykMembershipRemovalQueue: any[];
   private _buffer: number = 250;
-  private _pendingProvisions: PendingProvision[] = [];
-  private _roles: GroupRole[] = [];
   private _requestManager: requestsManager;
-  private _customAdminRoleExists: boolean;
-  private _customCollaboratorRoleExists: boolean;
-  private _pendingInvites: PendingInvite[] = [];
-
 
   constructor(
     id: string,
     name: string,
     key: string,
-    sourceMemberships:  v1Group,
+    sourceMemberships: v2Group | v1Group,
   ) {
-    this._customAdminRoleExists = false;
-    this._customCollaboratorRoleExists = false;
     this.id = id;
-    this._pendingProvisions = [];
     this.name = name;
     this.key = key;
-    this._pendingInvites = [];
     this.sourceMemberships = sourceMemberships;
     this._snykMembershipQueue = [];
     this._snykMembershipRemovalQueue = [];
-
     this._requestManager = new requestsManager({
       snykToken: this.key,
-      userAgentPrefix: 'snyk-user-sync-tool',
-      burstSize: 1,
-      maxRetryCount: 5,
-      period: 1000,
-
+      userAgentPrefix: common.USER_AGENT_PREFIX,
     });
-
   }
 
   async init() {
@@ -85,159 +68,6 @@ export class snykGroup {
     } catch (err: any) {
       utils.log(err);
     }
-
-    //get roles
-    try{
-      let response = await this._requestManager.request({
-        verb: 'GET',
-        url:`/group/${this.id}/roles`
-      });
-      this._roles = response.data
-    } catch (err:any){
-      utils.log(err)
-    }
-    //get pending invites if not auto provisioning
-    if (common.AUTO_PROVISION_FLAG == false){
-      utils.log("Getting pending invites...")
-      try{
-        for (const org of this.getUniqueOrgs()){
-          //validate that org in membership file exists in group orgs
-          let groupOrgNames = this._orgs.map((org)=> org.name)
-          let orgId = await this.getOrgIdFromName(org)
-  
-          if(groupOrgNames.includes(org)){
-            let response = await this._requestManager.request({
-              verb: 'GET',
-              url:`/orgs/${orgId}/invites?version=2022-11-14`,
-              useRESTApi: true
-            })
-            for (const invite of response.data.data){
-              this._pendingInvites = this._pendingInvites.concat([
-                {
-                  orgId: invite.relationships.org.data.id,
-                  email: invite.attributes.email,
-                  role: invite.attributes.email
-                }
-              ])
-            }
-          }
-        }
-      }catch(error:any){
-        utils.log(error)
-      }
-    }
-    //get pending provisions if auto provisioning
-    if (common.AUTO_PROVISION_FLAG){
-      utils.log("Getting pending user provisions...")
-      try {
-        for (const org of this.getUniqueOrgs()){
-          let groupOrgNames = this._orgs.map((org)=> org.name)
-          if (groupOrgNames.includes(org)) {
-            let response = await this._requestManager.request({
-              verb: 'GET',
-              url:`/org/${await this.getOrgIdFromName(org)}/provision`
-            })
-            for (const currProvision of response.data){
-              currProvision.orgId = await this.getOrgIdFromName(org)
-              this._pendingProvisions.push(currProvision)
-            }
-          }
-        }
-      } catch(error: any) {
-        utils.log(error)
-      }
-    }
-  }
-
-  private checkIfUserIsGroupAdmin(userEmail:string): boolean{
-
-    let isUserGroupAdmin: boolean = false;
-
-    
-    for(let member of this._members){
-      if (member.email == userEmail && member.groupRole == 'admin'){
-        isUserGroupAdmin = true;
-      }
-    }
-    
-    return isUserGroupAdmin
-
-  }
-
-  //takes in a list of roles and returns a mapping of roles <> role:ids
-  private mapRolesToIds(): any{
-
-    let mappedRoles: any = {}
-    //map roles to role id
-    for (const currRole of this._roles){
-      mappedRoles[currRole["name"].toUpperCase()] = currRole["publicId"]
-    }
-
-    //if custom admin/collaborator role does not exist then translate admin/collaborator entry in membership file into that
-    if(!("ADMIN" in mappedRoles)){
-      mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
-    } else {
-      this._customAdminRoleExists = true
-    }
-    if(!("COLLABORATOR" in mappedRoles)){
-      mappedRoles["COLLABORATOR"] = mappedRoles["ORG COLLABORATOR"]
-    } else {
-      this._customCollaboratorRoleExists = true
-    }
-    return mappedRoles
-  }
-
-  //takes in a list of orgs and returns a mapping of orgs <> org:ids
-  private getUniqueOrgs(){
-    let uniqueOrgs:any = []
-
-    //get unique orgs
-      let groupMembers:any = this.sourceMemberships
-      groupMembers = groupMembers.members
-
-      // get all unique orgs from group members
-      groupMembers.map((member:any) => {
-        if(!uniqueOrgs.includes(member.org)){
-          uniqueOrgs.push(member.org)
-        }
-      })
-    return uniqueOrgs
-  }
-  
-  //checks if a pending invite exists given an email and an orgid
-  private pendingInviteExistsInOrg(email:any, orgId:any, ):boolean{
-    let pendingInviteExists:boolean = false
-      for (const invite of this._pendingInvites){
-      if (invite.email.toLowerCase() == email.toLowerCase() && orgId == invite.orgId ){
-        pendingInviteExists = true
-      }
-    }
-    return pendingInviteExists
-  }
-
-  //checks whether pending invite exists anywhere in group given user email
-  private pendingInviteExistsInGroup(email:any):boolean{
-    let pendingInviteExists:boolean = false
-    for (const invite of this._pendingInvites){
-      if (invite.email.toLowerCase() == email.toLowerCase()){
-        pendingInviteExists = true
-      }
-    }
-    return pendingInviteExists
-  }
-  
-  //checks if a pending invite exists given an email and an orgid
-  private pendingProvisionExists(email:any, orgId:any):boolean{
-    let pendingProvisionExists = false;
-    for (const provision of this._pendingProvisions){
-      if (provision.email.toLowerCase() == email.toLowerCase() && provision.orgId == orgId){
-        pendingProvisionExists = true
-      }
-    }
-    return pendingProvisionExists
-  }
-  async getRoles(){
-    return this._roles
   }
   async getMembers() {
     return this._members;
@@ -322,37 +152,34 @@ export class snykGroup {
   private async processQueue(queue: any[]) {
     const results = [];
     var numProcessed: number = 0;
-    await pMap (
+    utils.log(`Processing ${queue.length} requests to API`);
+    utils.log(' - Waiting for updates to complete...');
+
+    await pMap(
       queue,
       async (reqData) => {
         try {
-          debug(`\nreqData: ${JSON.stringify(reqData, null, 2)}`);
-          const res = await this._requestManager.request(reqData);
           utils.printProgress(` - ${++numProcessed}/${queue.length} completed`);
+          const res = await this._requestManager.request(reqData);
           results.push(res);
-        } catch (e: any) {
-          utils.log(`${e.data.message}`);
+        } catch (e) {
+          utils.log(`${e}`);
           debug(e);
         }
       },
-      {concurrency: 10}
-    )
-    ;
+      { concurrency: 10 },
+    );
     //utils.log(` - ${results.length} updates successfully processed`);
   }
   private async addSnykMembershipsFromQueue() {
     let userMembershipQueue = [];
-    // custom role memberships can not be added to org in one call
-    // must add as collaborator and then update role to the desired one
-    // because the update role in these cases needs to come after, we defer them
-    // to a separate list which is called after userMembershipQueue[]
-    let dependentRoleUpdateQueue =[];
 
     for (const sm of this._snykMembershipQueue) {
       try {
-        await this.validateUserMembership(sm);
+        await inputUtils.validateUserMembership(sm);
         if (
-          this.pendingInviteExistsInGroup(sm.userEmail) == false || common.AUTO_PROVISION_FLAG || await this.userExists(sm.userEmail) || common.INVITE_TO_ALL_ORGS_FLAG
+          (await utils.isPendingInvite(sm.userEmail, this.id)) == false ||
+          common.INVITE_TO_ALL_ORGS_FLAG
         ) {
           if ((await this.userExists(sm.userEmail)) == true) {
             //begin user exists in group flow
@@ -360,118 +187,80 @@ export class snykGroup {
             const userId = await this.getUserIdFromEmail(sm.userEmail);
             debug('userExistsInOrg: ' + sm.userExistsInOrg);
             if (sm.userExistsInOrg == 'true') {
-                //user already in org, so just update existing records
-                debug('Updating existing group-org member role');
-                //change role -- update member of org
-                let updateBody = `{
-                  "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
-                }`;
-                debug(`updateBody: ${updateBody}`);
-                userMembershipQueue.push({
-                  verb: 'PUT',
-                  url: `/org/${orgId}/members/update/${userId}`,
-                  body: updateBody,
-                });
+              //user already in org, so just update existing record
+              debug('Updating existing group-org member role');
+              //change role -- update member of org
+              let updateBody = `{
+                "role": "${sm.role}"
+              }`;
+
+              debug(`updateBody: ${updateBody}`);
+
+              userMembershipQueue.push({
+                verb: 'PUT',
+                url: `/org/${orgId}/members/${userId}`,
+                body: updateBody,
+              });
             } else {
-              if (this.checkIfUserIsGroupAdmin(sm.userEmail)){
-                utils.log(`  - skipping ${sm.userEmail}, already a Group Admin`)
-              }else{
-                // user not in org, add them
-                let userBody = `{
-                  "userId": "${userId}",
-                  "role": "collaborator"
-                }`;
+              // user not in org, add them
+              let updateBody = `{
+                "userId": "${userId}",
+                "role": "${sm.role}"
+              }`;
 
-                userMembershipQueue.push({
-                  verb: 'POST',
-                  url: `/group/${this.id}/org/${orgId}/members`,
-                  body: userBody,
-                });
-                //assign user to custom role after adding them to org
-                let updateBody = `{
-                  "rolePublicId": "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
-                }`;
-                dependentRoleUpdateQueue.push({
-                  verb: 'PUT',
-                  url: `/org/${orgId}/members/update/${userId}`,
-                  body: updateBody,
-                })              
+              userMembershipQueue.push({
+                verb: 'POST',
+                url: `/group/${this.id}/org/${orgId}/members`,
+                body: updateBody,
+              });
             }
-          }
           } else {
-            //user not in group, auto provision or send invite
+            //user not in group, send invite
             let orgId = await this.getOrgIdFromName(sm.org);
-            //provision flow
-            if (common.AUTO_PROVISION_FLAG){
-              if (this.pendingProvisionExists(sm.userEmail, orgId)){
-                utils.log(
-                  ` - ${sm.userEmail} already provisioned to "${sm.org}" organization [orgId: ${orgId}], skipping...`,
-                );
-              }else{
-                utils.log(
-                  `  - provisioning ${sm.userEmail} to "${sm.org}" organization [orgId: ${orgId}]...`,
-                );
-                let provisionBody = `{
-                  "email": "${sm.userEmail}",
-                  "rolePublicId" : "${this.mapRolesToIds()[sm.role.toUpperCase()]}"
-                }`;
-                userMembershipQueue.push({
-                  verb: 'POST',
-                  url: `/org/${orgId}/provision`,
-                  body: provisionBody,
-                });
-              }
+            utils.log(
+              ` - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
+            );
 
-            //invite flow
-            }else{
-              //if (this.pendingInviteExistsInGroup(sm.userEmail) == false){
-                utils.log(
-                  `  - ${sm.userEmail} not in ${this.name}, sending invite [orgId: ${orgId}]...`,
-                );
-  
-                let inviteBody = `{
-                  "email": "${sm.userEmail}",
-                  "role": "${await this.mapRolesToIds()[sm.role.toUpperCase()]}"
-                }`;
-                userMembershipQueue.push({
-                  verb: 'POST',
-                  useRESTApi: true,
-                  url: `/orgs/${orgId}/invites?version=2022-10-06`,
-                  body: inviteBody,
-                });
-
-                
-                this._pendingInvites.push({
-                  orgId: orgId,
-                  email: sm.userEmail,
-                  role: sm.role
-                })
-              //}
+            let inviteBody = `{
+              "email": "${sm.userEmail}"
+            }`;
+            if (
+              sm.role.toUpperCase() == 'ADMIN' ||
+              sm.role.toUpperCase() == 'ADMINISTRATOR'
+            ) {
+              inviteBody = `{
+                        "email": "${sm.userEmail}",
+                        "isAdmin": true
+                    }
+                    `;
             }
+            userMembershipQueue.push({
+              verb: 'POST',
+              url: `/org/${orgId}/invite`,
+              body: inviteBody,
+            });
+            debug('recording pending invite:');
+            debug(
+              `${this.name}, ${this.id}, ${sm.org}, ${orgId}, ${sm.userEmail}`,
+            );
+            await utils.recordPendingInvite(
+              this.name,
+              this.id,
+              sm.org,
+              orgId,
+              sm.userEmail,
+            );
           }
         } else {
-          utils.log(`  - skipping ${sm.userEmail}, has an invitiation pending`,);
+          utils.log(` - skipping ${sm.userEmail}, invite already pending...`);
         }
       } catch (err: any) {
         console.log(err);
       }
     }
-    
-    if (userMembershipQueue.length > 0) {
-      debug(userMembershipQueue);
-      utils.log(`\n  Processing ${userMembershipQueue.length} requests to API (userMembershipQueue)`);
-      await this.processQueue(userMembershipQueue);
-      console.log()
-    }
-
-    if (dependentRoleUpdateQueue.length > 0) {
-      debug(dependentRoleUpdateQueue);
-      utils.log(`  Processing ${dependentRoleUpdateQueue.length} requests to API (dependentRoleUpdateQueue)`);
-      await this.processQueue(dependentRoleUpdateQueue);
-      console.log()
-    }
+    debug(userMembershipQueue);
+    this.processQueue(userMembershipQueue);
   }
-
   private async removeSnykMembershipsFromQueue() {
     let membershipRemovalQueue = [];
 
@@ -490,15 +279,16 @@ export class snykGroup {
     this.processQueue(membershipRemovalQueue);
   }
   async addNewMemberships() {
-    utils.log(`  Checking for memberships to add...`);
+    console.log();
+    utils.log(`Checking for memberships to add...`);
     var membershipsToAdd = await this.getSnykMembershipsToAdd();
-    utils.log(`  - ${membershipsToAdd.length} Snyk memberships to add found`);
+    utils.log(` - ${membershipsToAdd.length} Snyk memberships to add found...`);
     debug(membershipsToAdd);
 
     let i = 1;
     for (const snykMembership of membershipsToAdd) {
       utils.log(
-        `  ${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}`,
+        `   [${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}]`,
       );
       if (!common.DRY_RUN_FLAG) {
         await this.queueSnykMembership(snykMembership);
@@ -513,14 +303,14 @@ export class snykGroup {
     var membershipsToRemove = await this.getSnykMembershipsToRemove();
 
     utils.log(
-      ` - ${membershipsToRemove.length} Snyk memberships to remove found`,
+      ` - ${membershipsToRemove.length} Snyk memberships to remove found...`,
     );
     debug(membershipsToRemove);
 
     let i = 1;
     for (const snykMembership of membershipsToRemove) {
       utils.log(
-        ` - ${i} of ${membershipsToRemove.length} [${snykMembership.org} | ${snykMembership.userEmail} | ${snykMembership.role}]`,
+        ` - ${i} of ${membershipsToRemove.length} [${snykMembership.org} | ${snykMembership.userEmail}]`,
       );
       if (!common.DRY_RUN_FLAG) {
         await this.queueSnykMembershipRemoval(snykMembership);
@@ -534,7 +324,13 @@ export class snykGroup {
   }
   private async getSnykMembershipsToAdd() {
     var result = [];
-    result = await this.do_getSnykMembershipsToAddV1();
+
+    if (this.sourceIsV1()) {
+      result = await this.do_getSnykMembershipsToAddV1();
+    } else {
+      result = await this.do_getSnykMembershipsToAddV2();
+    }
+
     return result;
   }
   private async do_getSnykMembershipsToAddV1() {
@@ -545,24 +341,14 @@ export class snykGroup {
       var roleMatch: boolean = false;
 
       for (const gm of this._members) {
-        if (gm.groupRole != 'admin') {
+        if (gm.groupRole != 'admin' && gm.groupRole != 'viewer') {
           if (gm.email.toUpperCase() == um.userEmail.toUpperCase()) {
             for (const org of gm.orgs) {
               if (org.name == um.org) {
                 orgMatch = true;
                 if (org.role.toUpperCase() == um.role.toUpperCase()) {
-                  if (
-                    org.role.toUpperCase() == "ADMIN" &&
-                    um.role.toUpperCase() == "ADMIN" &&
-                    this._customAdminRoleExists ||
-                    org.role.toUpperCase() == "COLLABORATOR" &&
-                    um.role.toUpperCase() == "COLLABORATOR" &&
-                    this._customCollaboratorRoleExists ){
-                      roleMatch = false
-                    }else{
-                      roleMatch = true;
-                      break;
-                    }
+                  roleMatch = true;
+                  break;
                 }
               }
             }
@@ -575,8 +361,54 @@ export class snykGroup {
           role: `${um.role}`,
           org: `${um.org}`,
           group: `${um.group}`,
-          userExistsInOrg: `${orgMatch}`
+          userExistsInOrg: `${orgMatch}`,
         });
+      }
+    }
+    return result;
+  }
+  private async do_getSnykMembershipsToAddV2() {
+    var result: PendingMembership[] = [];
+    var sourceMemberships = this.sourceMemberships as v2Group;
+
+    if (sourceMemberships.orgs) {
+      for (const v2Org of sourceMemberships.orgs) {
+        if (v2Org.collaborators) {
+          for (const collaborator of v2Org.collaborators) {
+            var res = this.do_findOrgUserRolesInSnyk(
+              collaborator.email,
+              'collaborator',
+              v2Org.orgName,
+            );
+            if (!res.roleMatch) {
+              result.push({
+                userEmail: `${collaborator.email}`,
+                role: 'collaborator',
+                org: `${v2Org.orgName}`,
+                group: `${this.name}`,
+                userExistsInOrg: `${res.orgMatch}`,
+              });
+            }
+          }
+        }
+        if (v2Org.admins) {
+          for (const admin of v2Org.admins) {
+            var res = this.do_findOrgUserRolesInSnyk(
+              admin.email,
+              'admin',
+              v2Org.orgName,
+            );
+            if (!res.roleMatch) {
+              result.push({
+                userEmail: `${admin.email}`,
+                role: 'admin',
+                org: `${v2Org.orgName}`,
+                group: `${this.name}`,
+                userExistsInOrg: `${res.orgMatch}`,
+              });
+            }
+          }
+        }
       }
     }
     return result;
@@ -584,7 +416,11 @@ export class snykGroup {
   private async getSnykMembershipsToRemove() {
     let result = [];
 
+    if (this.sourceIsV1()) {
       result = await this.do_getSnykMembershipsToRemoveV1();
+    } else {
+      result = await this.do_getSnykMembershipsToRemoveV2();
+    }
 
     return result;
   }
@@ -593,25 +429,19 @@ export class snykGroup {
     for (const gm of this._members) {
       if (gm.groupRole != 'admin') {
         for (const org of gm.orgs) {
-          // let roleMatch: boolean = false;
-          let userOrgMatch: boolean = false;
+          let roleMatch: boolean = false;
           for (const um of (this.sourceMemberships as v1Group).members) {
             if (um.userEmail.toUpperCase() == gm.email.toUpperCase()) {
               if (um.org == org.name) {
-                // fix, if user is still in an org but with a different role
-                // then --add-new should catch it since it handles both adds and updates
-                //if (um.role.toUpperCase() == org.role.toUpperCase()) {
-                //  roleMatch = true;
-                //  break;
-                userOrgMatch = true;
-                break;
-                // }
+                if (um.role.toUpperCase() == org.role.toUpperCase()) {
+                  roleMatch = true;
+                  break;
+                }
               }
             }
           }
 
-          //if (!roleMatch) {
-          if (!userOrgMatch) {
+          if (!roleMatch) {
             result.push({
               userEmail: `${gm.email}`,
               role: `${org.role}`,
@@ -624,8 +454,100 @@ export class snykGroup {
     debug(`result: ${result}`);
     return result;
   }
- 
-  /* private do_findOrgUserRolesInSnyk(
+  private async do_getSnykMembershipsToRemoveV2() {
+    let result = [];
+    let sourceMemberships = this.sourceMemberships as v2Group;
+    for (const gm of this._members) {
+      let roleMatch: boolean = false;
+      let orgMatch: boolean = false;
+      if (gm.groupRole != 'admin') {
+        for (const org of gm.orgs) {
+          debug(`check org ${org.name} for user ${gm.email}`);
+
+          if (!roleMatch) {
+            if (sourceMemberships.orgs) {
+              for (const v2Org of sourceMemberships.orgs) {
+                debug(
+                  `checking snyk org ${org.name} against input org ${v2Org.orgName}`,
+                );
+                // handle case where org name is not found in put, what should happen?
+                if (org.name === v2Org.orgName) {
+                  orgMatch = true;
+                  debug('found matching org');
+                  if (org.role === 'collaborator') {
+                    if (v2Org.collaborators) {
+                      debug(
+                        `looking for ${gm.email} in ${v2Org.collaborators}`,
+                      );
+                      for (const collaborator of v2Org.collaborators) {
+                        if (
+                          gm.email.toLowerCase() ===
+                          collaborator.email.toLowerCase()
+                        ) {
+                          roleMatch = true;
+                          break;
+                        }
+                      }
+                    }
+                  } else if (org.role === 'admin') {
+                    if (v2Org.admins) {
+                      debug(`looking for ${gm.email} in ${v2Org.admins}`);
+                      for (const admin of v2Org.admins) {
+                        if (
+                          gm.email.toLowerCase() === admin.email.toLowerCase()
+                        ) {
+                          roleMatch = true;
+                          break;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if (orgMatch) {
+            if (!roleMatch) {
+              result.push({
+                userEmail: `${gm.email}`,
+                role: `${org.role}`,
+                org: `${org.name}`,
+              });
+            }
+          } else {
+            if (!orgMatch) {
+              utils.log(
+                ` - Org [${org.name}] in group [${this.name}] not found in source data for [${gm.email}] ...`,
+              );
+            }
+            //else if (!groupMatch) {
+            //  utils.log(` - Group [${groupName}] not found in source data for [${gm.email}] ...`)
+            //}
+          }
+        }
+      } else {
+        //if group admin, check if exists in source memberships
+        let roleMatch: boolean = false;
+        if (sourceMemberships.admins) {
+          for (const admin of sourceMemberships.admins) {
+            if (admin.email.toLowerCase() === gm.email.toLowerCase()) {
+              roleMatch = true;
+              break;
+            }
+          }
+        }
+        if (!roleMatch) {
+          utils.log(
+            ` - Group admin removal found [${gm.groupRole}:${gm.email}] for group [${this.name}] ...`,
+          );
+        }
+      }
+    }
+    debug(`result: ${result}`);
+    return result;
+  }
+  private do_findOrgUserRolesInSnyk(
     userEmail: string,
     userRole: string,
     userOrg: string,
@@ -639,19 +561,8 @@ export class snykGroup {
             if (org.name == userOrg) {
               orgMatch = true;
               if (org.role.toUpperCase() == userRole.toUpperCase()) {
-                if (
-                  org.role.toUpperCase() == "ADMIN" &&
-                  userRole.toUpperCase() == "ADMIN" &&
-                  this._customAdminRoleExists ||
-                  org.role.toUpperCase() == "COLLABORATOR" &&
-                  userRole.toUpperCase() == "COLLABORATOR" &&
-                  this._customCollaboratorRoleExists 
-                ) {
-                  roleMatch = false
-                } else {
-                  roleMatch = true;
-                  break;
-                }
+                roleMatch = true;
+                break;
               }
             }
           }
@@ -662,28 +573,5 @@ export class snykGroup {
       roleMatch: roleMatch,
       orgMatch: orgMatch,
     };
-  } */
-
-  private async validateUserMembership(snykMembership: {
-    userEmail: string;
-    role: string;
-    org: string;
-  }) {
-    var reEmail: RegExp = /\S+@\S+\.\S+/;
-    //if roles passed is not in groups valid roles then throw error
-    if (!(snykMembership.role.toUpperCase() in this.mapRolesToIds())){
-      // console.log(`snykMembership.role: ${snykMembership.role}`)
-      // console.log(`mappedRolesToIds: ${this.mapRolesToIds()}`)
-      throw new customErrors.InvalidRole(
-        `Invalid value for role`,
-      );
-    }
-    if (reEmail.test(snykMembership.userEmail) == false) {
-      //console.log('email regex = false')
-      throw new customErrors.InvalidEmail(
-        'Invalid email address format. Please verify',
-      );
-    }
-    return true;
   }
 }
