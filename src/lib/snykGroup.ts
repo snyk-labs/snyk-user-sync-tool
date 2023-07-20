@@ -11,7 +11,8 @@ import {
   v1Group,
   PendingMembership,
   GroupRole,
-  PendingInvite
+  PendingInvite,
+  Membership
 } from './types';
 
 const debug = debugLib('snyk:snykGroup');
@@ -28,6 +29,7 @@ export class snykGroup {
   private _buffer: number = 250;
   private _pendingProvisions: PendingProvision[] = [];
   private _roles: GroupRole[] = [];
+  private _groupAdmins: any[] = [];
   private _requestManager: requestsManager;
   private _customAdminRoleExists: boolean;
   private _customCollaboratorRoleExists: boolean;
@@ -39,6 +41,7 @@ export class snykGroup {
     name: string,
     key: string,
     sourceMemberships:  v1Group,
+    groupAdmins: any
   ) {
     this._customAdminRoleExists = false;
     this._customCollaboratorRoleExists = false;
@@ -50,6 +53,8 @@ export class snykGroup {
     this.sourceMemberships = sourceMemberships;
     this._snykMembershipQueue = [];
     this._snykMembershipRemovalQueue = [];
+    this._groupAdmins = groupAdmins;
+
 
     this._requestManager = new requestsManager({
       snykToken: this.key,
@@ -173,16 +178,27 @@ export class snykGroup {
       mappedRoles[currRole["name"].toUpperCase()] = currRole["publicId"]
     }
 
+    let mappedRolesKeys = Object.keys(mappedRoles)
     //if custom admin/collaborator role does not exist then translate admin/collaborator entry in membership file into that
-    if(!("ADMIN" in mappedRoles)){
+    if(!mappedRolesKeys.includes("ADMIN")){
       mappedRoles["ADMIN"] = mappedRoles["ORG ADMIN"]
     } else {
       this._customAdminRoleExists = true
     }
-    if(!("COLLABORATOR" in mappedRoles)){
+    if(!mappedRolesKeys.includes("ADMINS")){
+      mappedRoles["ADMINS"] = mappedRoles["ORG ADMIN"]
+    } else {
+      this._customAdminRoleExists = true
+    }
+    if(!mappedRolesKeys.includes("COLLABORATORS")){
+      mappedRoles["COLLABORATORS"] = mappedRoles["ORG COLLABORATOR"]
+    } else {
+      this._customAdminRoleExists = true
+    }
+    if(!mappedRolesKeys.includes("COLLABORATOR")){
       mappedRoles["COLLABORATOR"] = mappedRoles["ORG COLLABORATOR"]
     } else {
-      this._customCollaboratorRoleExists = true
+      this._customAdminRoleExists = true
     }
     return mappedRoles
   }
@@ -265,7 +281,8 @@ export class snykGroup {
         }`;
     if (
       role.toUpperCase() == 'ADMIN' ||
-      role.toUpperCase() == 'ADMINISTRATOR'
+      role.toUpperCase() == 'ADMINISTRATOR' ||
+      role.toUpperCase() == 'ADMINISTRATORS'
     ) {
       inviteBody = `{
                 "email": "${email}",
@@ -552,12 +569,18 @@ export class snykGroup {
                 orgMatch = true;
                 if (org.role.toUpperCase() == um.role.toUpperCase()) {
                   if (
+                    org.role.toUpperCase() == "ADMINS" &&
+                    um.role.toUpperCase() == "ADMINS" && 
+                    this._customAdminRoleExists||
                     org.role.toUpperCase() == "ADMIN" &&
                     um.role.toUpperCase() == "ADMIN" &&
                     this._customAdminRoleExists ||
                     org.role.toUpperCase() == "COLLABORATOR" &&
                     um.role.toUpperCase() == "COLLABORATOR" &&
-                    this._customCollaboratorRoleExists ){
+                    this._customCollaboratorRoleExists ||
+                    org.role.toUpperCase() == "COLLABORATORS" &&
+                    um.role.toUpperCase() == "COLLABORATORS" &&
+                    this._customCollaboratorRoleExists){
                       roleMatch = false
                     }else{
                       roleMatch = true;
@@ -582,6 +605,7 @@ export class snykGroup {
     return result;
   }
   private async getSnykMembershipsToRemove() {
+    //clean up 
     let result = [];
 
       result = await this.do_getSnykMembershipsToRemoveV1();
@@ -617,6 +641,22 @@ export class snykGroup {
               role: `${org.role}`,
               org: `${org.name}`,
             });
+          }
+        }
+      }else{ 
+        if (this._groupAdmins.length){
+          let roleMatch: boolean = false;
+          for(let sourceAdmin of this._groupAdmins ){
+            if (gm.email.toLocaleLowerCase() == sourceAdmin){
+              
+              roleMatch = true
+              break
+            }
+          }
+          if (!roleMatch){
+            utils.log(
+              ` - Group admin removal found [${gm.groupRole}:${gm.email}] for group [${this.name}] ...`,
+            )
           }
         }
       }

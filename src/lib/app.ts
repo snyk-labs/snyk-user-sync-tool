@@ -3,6 +3,7 @@ import {
   PENDING_INVITES_FILE,
   ADD_NEW_FLAG,
   DRY_RUN_FLAG,
+  V2_FORMAT_FLAG,
   MEMBERSHIP_FILE,
   API_KEYS,
   DELETE_MISSING_FLAG,
@@ -10,7 +11,9 @@ import {
 import {
   readFileToJson,
   getUniqueGroups,
-  getUniqueOrgs
+  getUniqueOrgs,
+  convertV2intoV1,
+  getGroupAdminsFromV2
 } from './inputUtils';
 import { snykGroup } from './snykGroup';
 import { snykGroupsMetadata } from './snykGroupsMetadata';
@@ -27,10 +30,25 @@ export async function processMemberships() {
   var sourceGroups;
   var sourceMemberships: Membership[] = [];
   var groupsMetadata = new snykGroupsMetadata(API_KEYS);
+  var sourceAdmins = [];
 
   await groupsMetadata.init();
   debug(`groupsMetadata: ${JSON.stringify(groupsMetadata, null, 2)}`);
-
+  if (V2_FORMAT_FLAG) {
+    //process v2 format
+    debug('processing v2 format');
+    sourceGroups = [];
+    try {
+      sourceGroups = (await readFileToJson(MEMBERSHIP_FILE)).groups;
+      debug(`sourceGroups: ${JSON.stringify(sourceGroups, null, 2)}`);
+      utils.log(`\nGroups in input file: ${sourceGroups.length}\n`);
+      sourceMemberships = convertV2intoV1(sourceGroups)
+      sourceAdmins = getGroupAdminsFromV2(sourceGroups)
+    } catch (err: any) {
+      utils.log(`error processing source data: ${err.message}`);
+      process.exit(1);
+    }
+  }else{
     debug('processing v1 format');
     var sourceMemberships: Membership[] = [];
     try {
@@ -46,10 +64,12 @@ export async function processMemberships() {
       utils.log(`unable to process source data, check format`);
       process.exit(1);
     }
+  }
 
   // process each unique group sequentially
   for (const gmd of await groupsMetadata.getAllGroupsMetadata()) {
     debug(`groupMetadata: ${JSON.stringify(gmd)}`);
+    
     var groupStatus: string[] = await groupsMetadata.getGroupStatusByName(
       gmd.groupName,
     );
@@ -58,6 +78,7 @@ export async function processMemberships() {
     if (groupStatus[0] == 'enabled') {
       var groupId = await groupsMetadata.getGroupIdByName(gmd.groupName);
       var groupKey = await groupsMetadata.getGroupKeyByName(gmd.groupName);
+      
       var group;
 
       try {
@@ -66,12 +87,21 @@ export async function processMemberships() {
               return el.group === gmd.groupName;
             }),
           };
+          let sourceAdminsForGroup: any[]
+          sourceAdminsForGroup = []
+          for(let admin of sourceAdmins as any){
+            if (admin.groupName == gmd.groupName){
+              sourceAdminsForGroup.push(admin.email)
+            }
+          }
           if (sourceMembershipsForGroup !== undefined) {
             group = new snykGroup(
               String(groupId),
               gmd.groupName,
               String(groupKey),
               sourceMembershipsForGroup as v1Group,
+              sourceAdminsForGroup
+
             );
           } else {
             utils.log(`${gmd.groupName} not found in source, skipping...`);
@@ -86,7 +116,6 @@ export async function processMemberships() {
 
         if (ADD_NEW_FLAG) {
           // process any new memberships in the input file
-          console.log()
           await group.addNewMemberships();
         }
 

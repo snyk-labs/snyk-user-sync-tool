@@ -66,6 +66,22 @@ export interface v1Group {
   members: Membership[];
 }
 
+export interface v2Orgtype{
+  orgName: string;
+}
+export interface v2Org {
+  [key: string]: v2Orgtype & Record<string, unknown>;
+}
+
+export interface v2User {
+  email: string;
+}
+
+export interface v2Group {
+  groupName: string;
+  admins?: v2User[];
+  orgs?: v2Org[];
+}
 
 export interface GroupRole {
   name: string,
