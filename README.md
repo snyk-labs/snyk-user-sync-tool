@@ -2,6 +2,12 @@
 
 ![snyk-oss-category](https://github.com/snyk-labs/oss-images/blob/main/oss-community.jpg)
 
+> [!WARNING]
+> **Deprecation notice:** This tool is deprecated, sunset and will no longer be actively maintained.
+> For Single Sign-On (SSO) configuration that do **not** use custom mapping, refer to the Snyk REST APIs to manage user memberships instead.
+- [Groups Membership REST API](https://docs.snyk.io/developer-tools/snyk-api/reference/groups)
+- [Orgs Membership REST API](https://docs.snyk.io/developer-tools/snyk-api/reference/orgs)
+
 ## User sync tool
 
 [![Known Vulnerabilities](https://snyk.io/test/github/snyk-labs/snyk-user-sync-tool/badge.svg?targetFile=package.json)](https://snyk.io/test/github/snyk-tech-services/snyk-user-sync-tool?targetFile=package.json)
